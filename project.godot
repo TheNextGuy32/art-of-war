@@ -15,11 +15,11 @@ run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+AgentTcpServer="*res://scripts/agent_tcp_server.gd"
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-
-[autoload]
-
-AgentTcpServer="*res://scripts/agent_tcp_server.gd"

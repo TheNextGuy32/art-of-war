@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 @export var card_size := Vector2(2.6, 1.6)
@@ -16,28 +17,31 @@ extends Node3D
 @onready var _ui_collision: CollisionShape3D = $UIArea/CollisionShape3D
 
 func _ready() -> void:
-	var box := BoxMesh.new()
-	box.size = Vector3(card_size.x, card_thickness, card_size.y)
-	_card_mesh.mesh = box
-	var material := StandardMaterial3D.new()
-	material.albedo_color = card_color
-	material.roughness = 0.9
-	material.metallic = 0.0
-	_card_mesh.material_override = material
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	_label.font_size = 24
-	_label.modulate = Color(0.12, 0.1, 0.08)
-	_label.pixel_size = 0.01
-	_label.rotation_degrees.x = -90.0
-	_label.position = Vector3(-card_size.x * 0.48, (card_thickness * 0.5) + 0.002, card_size.y * 0.45)
+	if _card_mesh.mesh == null:
+		var box := BoxMesh.new()
+		box.size = Vector3(card_size.x, card_thickness, card_size.y)
+		_card_mesh.mesh = box
+	if _card_mesh.material_override == null:
+		var material := StandardMaterial3D.new()
+		material.albedo_color = card_color
+		material.roughness = 0.9
+		material.metallic = 0.0
+		_card_mesh.material_override = material
+	# Position is configured in the scene for editor-friendly layout.
 	_setup_ui_surface()
+	if Engine.is_editor_hint():
+		set_process(true)
+
+func _process(_delta: float) -> void:
+	if not Engine.is_editor_hint():
+		return
+	if _ui_viewport != null:
+		_ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
 func _setup_ui_surface() -> void:
 	_ui_viewport.disable_3d = true
 	_ui_viewport.size = ui_viewport_size
 	_ui_viewport.gui_disable_input = false
-	_ui_viewport.transparent_bg = false
 	_ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	var quad := QuadMesh.new()
 	quad.size = ui_quad_size
@@ -59,15 +63,6 @@ func _setup_ui_surface() -> void:
 	_ui_area.collision_mask = 1
 	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_ui_root.size = Vector2(ui_viewport_size.x, ui_viewport_size.y)
-	if _ui_root.get_node_or_null("BG") == null:
-		var bg := ColorRect.new()
-		bg.name = "BG"
-		bg.color = Color(0.12, 0.12, 0.14, 1.0)
-		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-		bg.size = Vector2(ui_viewport_size.x, ui_viewport_size.y)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_ui_root.add_child(bg)
-		_ui_root.move_child(bg, 0)
 
 func set_text(text: String) -> void:
 	_label.text = text

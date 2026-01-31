@@ -1,8 +1,12 @@
 [
+  {"type":"command","name":"game_reset"},
+  {"type":"command","name":"game_add_situation","terrain":"open","perspective":"home"},
+  {"type":"command","name":"game_add_situation","terrain":"difficult","perspective":"neutral"},
+  {"type":"command","name":"game_add_situation","terrain":"city","perspective":"enemy"},
   {
     "type": "command",
     "name": "screenshot",
     "filename": "board_state.png",
-    "description": "Full board state with HUD, three situation cards (top row) and three plan cards (bottom row) centered; all card text should read left-to-right without mirroring or reversal; verify labels like 'Situation', terrain names, and 'Plan' are crisp, upright, and aligned horizontally on each card."
+    "description": "Full board state with HUD, three situation cards (top row) and three plan cards (bottom row) centered; card text should read left-to-right without mirroring; situation cards show terrain name + territory + apparent troops; plan cards show troop count and enemy visibility; ensure controls are visible on plan cards."
   }
 ]
