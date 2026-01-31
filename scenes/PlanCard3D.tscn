@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/plan_card_3d.gd" id=1]
+
+[node name="PlanCard3D" type="Node3D"]
+script = ExtResource( 1 )
+
+[node name="CardMesh" type="MeshInstance3D" parent="."]
+
+[node name="Label3D" type="Label3D" parent="."]
+text = "Plan"
+
+[node name="UIQuad" type="MeshInstance3D" parent="."]
+
+[node name="UIViewport" type="SubViewport" parent="."]
+transparent_bg = true
+
+[node name="UIRoot" type="Control" parent="UIViewport"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="UIArea" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="UIArea"]

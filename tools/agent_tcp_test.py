@@ -7,9 +7,14 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Optional, List, Tuple
 
 
-DEFAULT_GODOT = r"C:\Users\olive\Apps\Godot_v4.5.1-stable_win64.exe"
+DEFAULT_GODOT_WINDOWS = r"C:\Users\olive\Apps\Godot_v4.5.1-stable_win64.exe"
+DEFAULT_GODOT_MACOS = "/Applications/Godot.app/Contents/MacOS/Godot"
+
+DEFAULT_GODOT = DEFAULT_GODOT_WINDOWS if sys.platform == "win32" else DEFAULT_GODOT_MACOS 
+
 PORT_LINE_PREFIX = "AGENT_TCP_PORT="
 
 
@@ -45,8 +50,8 @@ def _read_output_lines(stream, sink: queue.Queue) -> None:
         sink.put(line)
 
 
-def _collect_test_files(paths: list[Path]) -> list[Path]:
-    collected: list[Path] = []
+def _collect_test_files(paths: List[Path]) -> List[Path]:
+    collected: List[Path] = []
     for path in paths:
         if path.is_dir():
             collected.extend(sorted(path.glob("*.json")))
@@ -57,7 +62,7 @@ def _collect_test_files(paths: list[Path]) -> list[Path]:
     return collected
 
 
-def _load_steps(path: Path) -> list[dict]:
+def _load_steps(path: Path) -> List[dict]:
     with path.open("r", encoding="utf-8") as handle:
         data = json.load(handle)
     if isinstance(data, list):
@@ -72,15 +77,15 @@ def _load_steps(path: Path) -> list[dict]:
     return steps
 
 
-def _load_tests(paths: list[Path]) -> list[tuple[Path, list[dict]]]:
+def _load_tests(paths: List[Path]) -> List[Tuple[Path, List[dict]]]:
     test_files = _collect_test_files(paths)
-    tests: list[tuple[Path, list[dict]]] = []
+    tests: List[Tuple[Path, List[dict]]] = []
     for path in test_files:
         tests.append((path, _load_steps(path)))
     return tests
 
 
-def _has_screenshot(tests: list[tuple[Path, list[dict]]]) -> bool:
+def _has_screenshot(tests: List[Tuple[Path, List[dict]]]) -> bool:
     for _, steps in tests:
         for step in steps:
             if step.get("type") == "command" and step.get("name") == "screenshot":
@@ -88,7 +93,7 @@ def _has_screenshot(tests: list[tuple[Path, list[dict]]]) -> bool:
     return False
 
 
-def _start_godot(godot_path: Path, project_path: Path, headless: bool, port: int | None) -> tuple[subprocess.Popen, queue.Queue, threading.Thread]:
+def _start_godot(godot_path: Path, project_path: Path, headless: bool, port: Optional[int]) -> Tuple[subprocess.Popen, queue.Queue, threading.Thread]:
     cmd = [str(godot_path), "--path", str(project_path)]
     if headless:
         cmd.append("--headless")
@@ -133,7 +138,7 @@ def _wait_for_port(proc: subprocess.Popen, output_queue: queue.Queue, timeout: f
     raise RuntimeError(f"Timed out waiting for {PORT_LINE_PREFIX} in Godot output.\nRecent output:\n{joined}")
 
 
-def _run_tests(client: LineClient, tests: list[tuple[Path, list[dict]]], response_timeout: float, verbose: bool) -> int:
+def _run_tests(client: LineClient, tests: List[Tuple[Path, List[dict]]], response_timeout: float, verbose: bool) -> int:
     failures = 0
     for path, steps in tests:
         label = path.stem
@@ -156,7 +161,7 @@ def _run_tests(client: LineClient, tests: list[tuple[Path, list[dict]]], respons
     return failures
 
 
-def _shutdown(proc: subprocess.Popen, client: LineClient | None, response_timeout: float) -> None:
+def _shutdown(proc: subprocess.Popen, client: Optional[LineClient], response_timeout: float) -> None:
     if client is not None:
         try:
             client.send_json({"type": "command", "name": "quit", "id": "shutdown"})

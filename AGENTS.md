@@ -52,5 +52,14 @@ The agent TCP server accepts these command names (all `type:"command"`):
 - `screenshot` with `filename:"bug.png"` and `description:"One sentence about the issue."`
 
 Screenshots are saved under `res://tmp/`. For every screenshot `bug.png`, the server also writes a sibling file
-`bug_description.png` containing the provided one-sentence description. The response includes absolute paths:
+`bug_description.txt` containing the provided one-sentence description. The response includes absolute paths:
 `path` and `description_path` so the agent can confirm creation.
+
+### Screenshot test verification (required)
+
+When a test includes a `screenshot` command, run the test with Godot visible (non-headless) and then **manually verify**:
+
+1) The screenshot file under `res://tmp/` is not black/blank and matches the expected view.
+2) The sibling `*_description.png` file contains the correct one-sentence description (open it as a text file).
+
+Include these checks as part of the test command you run (use the test file that includes `screenshot`) and confirm the description text matches what the test requested.

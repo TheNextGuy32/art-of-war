@@ -13,8 +13,22 @@ var _server: TCPServer
 var _clients := {}
 var _state := {}
 var _enabled := false
+var _game_controller: Node = null
+
+func set_game_controller(node: Node) -> void:
+	_game_controller = node
+
+func set_state_value(key: String, value) -> void:
+	_state[key] = value
 
 func _ready() -> void:
+	_game_controller = _resolve_game_controller()
+	if _game_controller == null:
+		for _i in range(60):
+			await get_tree().process_frame
+			_game_controller = _resolve_game_controller()
+			if _game_controller != null:
+				break
 	var port_request = _parse_port_request(OS.get_cmdline_user_args())
 	if port_request == null:
 		return
@@ -34,6 +48,8 @@ func _process(_delta: float) -> void:
 			break
 		peer.set_no_delay(true)
 		_clients[peer.get_instance_id()] = {"peer": peer, "buffer": ""}
+		if _game_controller != null and _game_controller.has_method("refresh_agent_state"):
+			_game_controller.refresh_agent_state()
 	var dead_ids := []
 	for id in _clients.keys():
 		var entry = _clients[id]
@@ -128,12 +144,14 @@ func _handle_command(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 	var name := str(msg.get("name", ""))
 	if name == "ping":
 		_send_response(peer, msg_id, {"ok": true, "type": "pong"})
+		return
 	elif name == "set":
 		if not msg.has("key"):
 			_send_error(peer, msg_id, "missing_key", "Command 'set' requires 'key'.")
 			return
 		_state[msg["key"]] = msg.get("value", null)
 		_send_response(peer, msg_id, {"ok": true})
+		return
 	elif name == "get":
 		if not msg.has("key"):
 			_send_error(peer, msg_id, "missing_key", "Command 'get' requires 'key'.")
@@ -141,11 +159,14 @@ func _handle_command(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 		var key = msg["key"]
 		var value = _state.get(key, null)
 		_send_response(peer, msg_id, {"ok": true, "value": value})
+		return
 	elif name == "clear":
 		_state.clear()
 		_send_response(peer, msg_id, {"ok": true})
+		return
 	elif name == "echo":
 		_send_response(peer, msg_id, {"ok": true, "echo": msg.get("payload", null)})
+		return
 	elif name == "walk_to":
 		var position = _parse_position(msg)
 		if position == null:
@@ -153,6 +174,7 @@ func _handle_command(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 			return
 		_state["last_walk_to"] = position
 		_send_response(peer, msg_id, {"ok": true, "position": position})
+		return
 	elif name == "look_at":
 		var target = msg.get("target", null)
 		if target == null and msg.has("position"):
@@ -162,13 +184,22 @@ func _handle_command(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 			return
 		_state["last_look_at"] = target
 		_send_response(peer, msg_id, {"ok": true, "target": target})
+		return
 	elif name == "screenshot":
 		_handle_screenshot(peer, msg, msg_id)
+		return
 	elif name == "quit":
 		_send_response(peer, msg_id, {"ok": true})
 		get_tree().quit()
-	else:
-		_send_error(peer, msg_id, "unknown_command", "Unknown command: %s" % name)
+		return
+	if _game_controller == null:
+		_game_controller = _resolve_game_controller()
+	if _game_controller != null and _game_controller.has_method("handle_agent_command"):
+		var result = _game_controller.handle_agent_command(name, msg)
+		if typeof(result) == TYPE_DICTIONARY and result.has("ok"):
+			_send_response(peer, msg_id, result)
+			return
+	_send_error(peer, msg_id, "unknown_command", "Unknown command: %s" % name)
 
 func _handle_assert(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 	var op := str(msg.get("op", "equals"))
@@ -228,13 +259,15 @@ func _handle_screenshot(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 	var base_name := filename
 	if base_name.find(".") != -1:
 		base_name = base_name.get_basename()
-	var description_name := "%s_description.png" % base_name
+	var description_name := "%s_description.txt" % base_name
 	var dir_path := ProjectSettings.globalize_path(TMP_DIR)
 	var screenshot_path := ProjectSettings.globalize_path("%s/%s" % [TMP_DIR, filename])
 	var description_path := ProjectSettings.globalize_path("%s/%s" % [TMP_DIR, description_name])
 	if not _ensure_dir(dir_path):
 		_send_error(peer, msg_id, "dir_error", "Failed to create tmp directory.")
 		return
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var save_err := image.save_png(screenshot_path)
 	if save_err != OK:
@@ -267,6 +300,30 @@ func _send_error(peer: StreamPeerTCP, msg_id, code: String, message: String) -> 
 func _ensure_dir(path: String) -> bool:
 	var err = DirAccess.make_dir_recursive_absolute(path)
 	return err == OK or err == ERR_ALREADY_EXISTS
+
+func _resolve_game_controller() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var grouped := tree.get_nodes_in_group("game_controller")
+	if grouped.size() > 0:
+		return grouped[0]
+	var root := tree.get_root()
+	if root == null:
+		return null
+	var main = root.get_node_or_null("Main")
+	if main != null and main.has_method("handle_agent_command"):
+		return main
+	return _find_controller(root)
+
+func _find_controller(node: Node) -> Node:
+	if node.has_method("handle_agent_command"):
+		return node
+	for child in node.get_children():
+		var found = _find_controller(child)
+		if found != null:
+			return found
+	return null
 
 func _sanitize_filename(name: String) -> String:
 	var safe := ""
