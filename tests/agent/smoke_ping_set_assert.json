@@ -1,0 +1,33 @@
+[
+  {
+    "type": "command",
+    "name": "ping"
+  },
+  {
+    "type": "command",
+    "name": "set",
+    "key": "score",
+    "value": 42
+  },
+  {
+    "type": "assert",
+    "op": "equals",
+    "key": "score",
+    "expected": 42
+  },
+  {
+    "type": "command",
+    "name": "set",
+    "key": "tags",
+    "value": [
+      "alpha",
+      "beta"
+    ]
+  },
+  {
+    "type": "assert",
+    "op": "contains",
+    "key": "tags",
+    "expected": "beta"
+  }
+]

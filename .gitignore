@@ -1,0 +1,8 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/design/*
+!/design/.gdignore
+/tmp/*
+!/tmp/.gdignore
+/tmp/

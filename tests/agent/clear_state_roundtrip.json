@@ -1,0 +1,18 @@
+[
+  {
+    "type": "command",
+    "name": "set",
+    "key": "flag",
+    "value": true
+  },
+  {
+    "type": "command",
+    "name": "clear"
+  },
+  {
+    "type": "assert",
+    "op": "equals",
+    "key": "flag",
+    "expected": null
+  }
+]
