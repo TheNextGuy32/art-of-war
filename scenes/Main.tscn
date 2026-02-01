@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bdfdsw2iykl7y"]
+[gd_scene load_steps=23 format=3 uid="uid://bdfdsw2iykl7y"]
 
 [ext_resource type="Script" uid="uid://dhxeqcdxkuw72" path="res://scripts/game_controller.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://yrr85mbbtwta" path="res://scenes/PlanCard3D.tscn" id="2_card"]
@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" uid="uid://cum7g144133e2" path="res://scenes/RedCity.tscn" id="4_rarhs"]
 [ext_resource type="PackedScene" uid="uid://b21m0jy8mkfll" path="res://scenes/BlueCity.tscn" id="5_vcsgt"]
 [ext_resource type="PackedScene" uid="uid://kowr2eagr4nd" path="res://scenes/tree.tscn" id="7_nxtc6"]
+[ext_resource type="Texture2D" uid="uid://c1a0v20ubeqlc" path="res://resources/logo.png" id="8_logo"]
+[ext_resource type="Shader" uid="uid://dga3wtfn2sik4" path="res://resources/main_menu_bg.gdshader" id="9_menu_shader"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_row"]
 size = Vector3(12, 0.5, 2)
@@ -46,6 +48,14 @@ albedo_color = Color(0.35, 0.6, 1, 0.35)
 
 [sub_resource type="QuadMesh" id="QuadMesh_glow"]
 size = Vector2(2.8, 1.8)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_menu_bg"]
+shader = ExtResource("9_menu_shader")
+shader_parameter/time_scale = 0.06
+shader_parameter/color_a = Vector3(0.06, 0.07, 0.09)
+shader_parameter/color_b = Vector3(0.18, 0.12, 0.1)
+shader_parameter/color_c = Vector3(0.08, 0.12, 0.2)
+shader_parameter/vignette_strength = 0.6
 
 [sub_resource type="Theme" id="Theme_vcsgt"]
 default_font_size = 54
@@ -332,7 +342,333 @@ mesh = SubResource("QuadMesh_glow")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
+[node name="MainMenu" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuRect" type="ColorRect" parent="UI/MainMenu"]
+material = SubResource("ShaderMaterial_menu_bg")
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MenuBox" type="VBoxContainer" parent="UI/MainMenu"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.35
+anchor_top = 0.25
+anchor_right = 0.65
+anchor_bottom = 0.75
+offset_top = -70.0
+offset_bottom = 35.0
+theme_override_constants/separation = 18
+
+[node name="MenuLogo" type="TextureRect" parent="UI/MainMenu/MenuBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture = ExtResource("8_logo")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="MenuTitle" type="Label" parent="UI/MainMenu/MenuBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 60
+text = "All Warfare is Based"
+horizontal_alignment = 1
+
+[node name="PlayButton" type="Button" parent="UI/MainMenu/MenuBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "Play"
+
+[node name="HowToPlayButton" type="Button" parent="UI/MainMenu/MenuBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "How to Play"
+
+[node name="CreditsButton" type="Button" parent="UI/MainMenu/MenuBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "Credits"
+
+[node name="QuitButton" type="Button" parent="UI/MainMenu/MenuBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "Quit"
+
+[node name="HowToPlay" type="Control" parent="UI"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HowToRect" type="ColorRect" parent="UI/HowToPlay"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.9)
+
+[node name="HowToPanel" type="PanelContainer" parent="UI/HowToPlay"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.1
+anchor_right = 0.85
+anchor_bottom = 0.9
+offset_left = -860.0
+offset_top = -68.0
+offset_right = 168.0
+offset_bottom = 71.0
+
+[node name="HowToMargin" type="MarginContainer" parent="UI/HowToPlay/HowToPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="HowToBox" type="VBoxContainer" parent="UI/HowToPlay/HowToPanel/HowToMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="HowToTitle" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 48
+text = "How to Play"
+
+[node name="HowToText" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 24
+text = "Win the game by having more troops than your opponent on your enemy's capital for three consecutive turns.
+
+Start the game with 100K troops split into 5 divisions of equal troop count. 
+
+Pass the computer back and forth between you and your opponent to take simulatenous turns. During your turn, distribute one or more of your divisions onto one or more of any of the tiles on the board. Know that if your opponent places one of their divisions on a tile you occupy, a battle will commence after both players have taken their turns. Modify whether you want your divisions on a tile to be noisy, quiet, or normal to bluff about how many troops occupy that tile to deceive your opponent in future turns. Once both players have taken their turns, learn how the battles that took place affected your total troop counts. 
+
+Note that casualties smoothly scale with troop count advantage. Kill 50% of your opponent's troops if forces are evenly matched. Kill 75% if you have twice as many troops as your opponent, while losing just 25%. Kill 80% if you have four times as many troops, while losing only 20%. Bluffing about your troop counts doesn't affect the actual battles.
+
+Fight in forest tiles for bloodier battles. Fight in the mountains to wipe out the losing forces when the battle is over. Occupy enemy tiles alone or win battles in enemy tiles to gain 5k troops per tile per turn. Consider this table of casualty rates."
+autowrap_mode = 3
+
+[node name="HowToCasualties" type="GridContainer" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="HeaderTerrain" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 22
+text = "Terrain"
+
+[node name="HeaderEffect" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 22
+text = "Casualty Effect"
+
+[node name="RowOpen" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Open Ground"
+
+[node name="RowOpenEffect" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Both sides take half losses"
+
+[node name="RowDifficult" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Difficult"
+
+[node name="RowDifficultEffect" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Normal losses"
+
+[node name="RowNoEscape" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "No Escape"
+
+[node name="RowNoEscapeEffect" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Smaller side takes double losses"
+
+[node name="RowCity" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "City"
+
+[node name="RowCityEffect" type="Label" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToCasualties"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 20
+text = "Defender deals double losses"
+
+[node name="HowToBackButton" type="Button" parent="UI/HowToPlay/HowToPanel/HowToMargin/HowToBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 36
+text = "Back"
+
+[node name="Credits" type="Control" parent="UI"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CreditsRect" type="ColorRect" parent="UI/Credits"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.9)
+
+[node name="CreditsPanel" type="PanelContainer" parent="UI/Credits"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.12
+anchor_right = 0.8
+anchor_bottom = 0.88
+
+[node name="CreditsMargin" type="MarginContainer" parent="UI/Credits/CreditsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="CreditsBox" type="VBoxContainer" parent="UI/Credits/CreditsPanel/CreditsMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="CreditsTitle" type="Label" parent="UI/Credits/CreditsPanel/CreditsMargin/CreditsBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 48
+text = "Credits"
+
+[node name="CreditsText" type="Label" parent="UI/Credits/CreditsPanel/CreditsMargin/CreditsBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 28
+text = "Design: Oliver Barnum
+Theme Music (Morgana Rides): Kevin Macleod
+Sound Effects: FreeSound (Creative Commons)
+Code: Codex/OpenAI"
+autowrap_mode = 3
+
+[node name="CreditsScriptButton" type="Button" parent="UI/Credits/CreditsPanel/CreditsMargin/CreditsBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 32
+text = "View Conversation Script"
+
+[node name="CreditsBackButton" type="Button" parent="UI/Credits/CreditsPanel/CreditsMargin/CreditsBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 36
+text = "Back"
+
+[node name="ScriptOverlay" type="Control" parent="UI"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScriptRect" type="ColorRect" parent="UI/ScriptOverlay"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.9)
+
+[node name="ScriptPanel" type="PanelContainer" parent="UI/ScriptOverlay"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1
+anchor_top = 0.1
+anchor_right = 0.9
+anchor_bottom = 0.9
+
+[node name="ScriptMargin" type="MarginContainer" parent="UI/ScriptOverlay/ScriptPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="ScriptBox" type="VBoxContainer" parent="UI/ScriptOverlay/ScriptPanel/ScriptMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ScriptTitle" type="Label" parent="UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "Conversation Script"
+
+[node name="ScriptScroll" type="ScrollContainer" parent="UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ScriptText" type="TextEdit" parent="UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox/ScriptScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 22
+text = "Loading script..."
+wrap_mode = 1
+
+[node name="ScriptCloseButton" type="Button" parent="UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox"]
+layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 32
+text = "Close"
+
 [node name="HUD" type="Control" parent="UI"]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -403,7 +739,20 @@ anchor_bottom = 0.55
 theme_override_font_sizes/font_size = 48
 text = "Accept Turn"
 
+[node name="AcceptTurnLabel" type="Label" parent="UI/TurnOverlay"]
+layout_mode = 0
+anchor_left = 0.25
+anchor_top = 0.35
+anchor_right = 0.75
+anchor_bottom = 0.43
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 44
+text = "Blue Player Turn"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="ResolutionOverlay" type="Control" parent="UI"]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -502,6 +851,17 @@ theme_override_font_sizes/font_size = 88
 text = "BLUE VICTORY"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="VictoryMenuButton" type="Button" parent="UI/VictoryOverlay"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.62
+anchor_right = 0.6
+anchor_bottom = 0.7
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 40
+text = "Main Menu"
 
 [node name="Audio" type="Node" parent="."]
 

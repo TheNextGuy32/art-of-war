@@ -1,0 +1,554 @@
+# AGENTS.md instructions for /Users/oliver/Documents/git/art-of-war
+
+<INSTRUCTIONS>
+## Agent TCP test requirement
+
+All changes made by agents **must** be tested by starting the Godot project with the agent TCP server enabled, then running JSON test files against it.
+
+### Required command
+
+Use the Godot executable at:
+
+`C:\Users\olive\Apps\Godot_v4.5.1-stable_win64.exe`
+
+Run tests with the helper script:
+
+```bash
+python tools/agent_tcp_test.py tests/agent
+```
+
+This script starts Godot with the required parameter and connects to the local TCP server.
+If any test uses the `screenshot` command, the runner will automatically disable headless mode.
+
+### Agent TCP parameter
+
+The TCP server is only started when one of the following parameters is passed to Godot:
+
+- `--agent-tcp` (auto-selects a free port and prints `AGENT_TCP_PORT=NNNNN`)
+- `--agent-tcp-port 60111` (uses a fixed port)
+
+Godot should be launched with `--` before the agent args, for example:
+
+```bash
+C:\Users\olive\Apps\Godot_v4.5.1-stable_win64.exe --path . --headless -- --agent-tcp
+```
+
+### Test file format
+
+Tests are local JSON files under `tests/agent/` with descriptive names.
+Each file is a JSON array of line-delimited messages, sent in order:
+
+- `{"type":"command","name":"ping"}`
+- `{"type":"command","name":"set","key":"score","value":42}`
+- `{"type":"assert","op":"equals","key":"score","expected":42}`
+
+Supported assert ops: `equals`, `exists`, `truthy`, `contains`.
+
+The server responds with JSON objects containing `ok: true/false`. The test runner fails on the first `ok: false`.
+
+### Movement + screenshot commands
+
+The agent TCP server accepts these command names (all `type:"command"`):
+
+- `walk_to` with `position:[x,y,z]` or `x`/`y`/`z`
+- `look_at` with `target:"object_id"` or `position:[x,y,z]`
+- `screenshot` with `filename:"bug.png"` and `description:"One sentence about the issue."`
+
+Screenshots are saved under `res://tmp/`. For every screenshot `bug.png`, the server also writes a sibling file
+`bug_description.png` containing the provided one-sentence description. The response includes absolute paths:
+`path` and `description_path` so the agent can confirm creation.
+
+
+## Skills
+A skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.
+### Available skills
+- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/oliver/.codex/skills/.system/skill-creator/SKILL.md)
+- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/oliver/.codex/skills/.system/skill-installer/SKILL.md)
+### How to use skills
+- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.
+- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.
+- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.
+- How to use a skill (progressive disclosure):
+  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.
+  2) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.
+  3) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.
+  4) If `assets/` or templates exist, reuse them instead of recreating from scratch.
+- Coordination and sequencing:
+  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.
+  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.
+- Context hygiene:
+  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.
+  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.
+  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.
+- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.
+</INSTRUCTIONS>
+
+<environment_context>
+  <cwd>/Users/oliver/Documents/git/art-of-war</cwd>
+  <shell>zsh</shell>
+</environment_context>
+
+I'm creating a video game version of the art of war for a 48 hour game jam. design/art_of_war.md 
+
+The idea is to represent all the mechanics of warfare on one type of card. There is a situation card, with news of troop movements, the type of terrain, the amount of plunder, etc. Then, you make plans to move your body of troops, divided by 10 (liek u can keep them all together or send 3 here 7 there), that creates its own situation card. When you defeat the enemy, you get one of the situation plan cards from their previous move. Its a two player game. Players take turns looking at the situations in play, creating new situations through making orders,a nd then once both players have done so, the game simulates what combat would have happened. Because its a game jam, were not actually making a multiplayer game, but instead a two player game player one one pc.
+
+To handle turns, one player goes first, ends their turn, which hides the state of the gaem, then they turn the computer to their opponent who presses "accept next turn" that reveals the game state. They end their turn, hiding their state, which trigger the resolution of that turn before the next player sees their turn.
+
+The goal of the game is to besiege the enemy city, which takes overwhelming numbers. Sun Tzu breaks down the odds of victory per multiple of the enemy.
+
+You start with 100k troops, where each unit is 10k troops, but as battles are resolved you might lose 16k here, so your new total is 74k, so now one thenth of your troops is 7.4k. Make the divisor max configureable.
+
+The terrain changes the odds of battle.
+
+The game is 3d. I like thinking in an entity component system way.
+
+The only thing i need animated is cards, with their information on them, and card creation.
+
+As you make changes, run every single change by running agent_tcp_test.py, and passing it json that confirms that the game is working as expected, as detailed in AGENTS.md.
+
+We can begin with rendering cards in 3d with text, and handling turn taking. Do you have any questions before we begin?
+
+I dont care
+Lets stick with horizontal rows of text, nothing crazy
+The screen gets a black overlay with "Accept Turn"
+Theres a line of situations in front of u, and you create 1-n situations where n is the number of sitations or number of divisions of your troops (whichever is smaller). So you have one blank plan for every piece of terrain. 
+Wehn creatign situations, you have an up and down buttons to decide how many troops you want to commit. Then you choose whether youd like to encamp, march quietly, march kicking up dust, or simply march.
+
+THe only information you are provided at the beginning of your turn after resolution is how many troops you lost. In battles where you were victorious, you lose no troops and the enemy loses all of them, and the winning situations you planned remain in play, the others are removed. If you won you get see the enemies plan for that piece of terrain. If no combat took place, then you replenish your troops by some amount and your plan remains in place. If neither party interacterd with the terrain, its reshuffled. You don't know the number of troops your opponent put on a piece of terrain where u have no troops, but you get visual feedback based on number of troops multiplied by the kind of march they are doing, so you can pose like you are a much larger force than you are, to deceive your oppoennt.
+Tests are up to you to create to confirm business logic.
+
+Yeah the godot install is in the normal macos mac folder.
+
+/Applications/Godot.app/Contents/MacOS/Godot
+
+Take a screeshot of the board state, i believe the cards in the center have horizontally flipped text.
+
+The board state is a black image, the the description is supposed to be a text file describing it. Update the agents.md file to take screenshots as a part of tests in a command, and mannually confirm the text description of the image looks correct.
+
+Well do a test now, the text is backwards
+
+When you craete the description of the screenshot, dont use .png use .txt
+
+"Board state showing 3D cards and UI to verify text orientation on center cards." Please be very descriptive here. This description is correct for what we are text, whether the text is flipped correctly, but I feel like if were too brief the description will hand waive obvious issues.
+
+Tell me about the current tests, what do they confirm?
+
+Lets create a colored background for terrain cards
+
+Drop colors per type, each piece of terrain is a "card" like a floating 3d poker card.
+
+Why didnt you fix the error instead of reporting it, ofc i want the text visible
+
+The text needs to appear to be on the card itself.
+
+The cards should appear to be floating on a plane, and the camera is looking at that plane.
+
+As in written on the card
+
+The division count and type of movement should be on the card of the plan
+
+Nah the controls go on the card the shows what yuou chose
+
+Right now the controls are on the right, instead of on the plan cards, i want them on the plan cards
+
+Make the accept turn screen FULLY black
+
+I want the plan controls to be on the plan card, like the text is, right now it isnt 3d.
+
+Why is 2 hard
+
+Explaini this subviewport
+
+Yeah, use option 3
+
+The controls are tiny, and hidden behind the other text
+
+Make the window size a multiple of 1920x1080, but smaller. When i click the viewport buttons, nothing happens.
+
+Do the necessary math to add commands to his these viewport buttons in a json test. They still do work. Add a debug hitmarker too
+
+Did the test work?
+
+Make the buttons light up when u hover over them, I still cannot click them nor do i see a hitmarker when i click them
+
+The hitmarker shows up, its a red line that has y height and very little x/z. I can click cards and hover them, but only for a very limited space, As i move up and down the button (at the camers angle) the hit marker "sinks" into the card until the red marker is no longer visible, Once it goes beneatht he card the hover stops.
+
+Why would the godot game take 5+ seconds to load when i run it in the editor?
+
+The red marker is now rolled 45 degrees but the behavior is the same.
+
+Its basically the same issue, but instead of only the top of the button receiving the highlights, its the bottom.
+
+top still dead. While my mouse is on the upper half of the button, the hitmarker seems to rest RIGHT ABOVE the butotn, once i get halfway down teh button, _then_ the hit marker moves into the button and hte hover is correct.
+
+The hit marker disapperas beneath the card when im halfway down the button. Were oscillating between tophalf bottom half. Take a step back and look at the issue
+
+Give the viewport a background color so i can see what it looks like
+
+The buttons are outside the viewport thereofre the mosue events are not visible. ALos, the viewport didnt get a color
+
+The button viewport still has no discnible color
+
+Look at screenshots
+
+Use the types of terrain specified in design/art_of_war.md
+
+For testing purposes, lets add a new screen for battle resolution that you have press accept. I want to see what each player put into the battle and what casualties took place.
+
+So it goes, take turn, end turn, accept turn, take turn, end turn, BATTLE RESOLUTION SCREENm, accept turn, forver
+
+I want the text of the card3d and plan3d to be visible when viewed as a scene, as opposed to created at runtime. Make it more "edit this" than create this. That way i can edit it from teh editor more intentionally.
+
+So like the background color should be visble in teh scenes
+
+Is card3d used?
+
+I want the background of the situations/plans cards to be in the scene, im not talking about the viewport, im talking about the physical poker card
+
+Remove the background around the viewport, it served its purpose.
+
+Where is color assigned for plans and situations
+
+I cant find those materials in the editor, but i can see them in the scene file
+
+Both the mesh material and material override are empty
+
+The scenes for the cards have the mesh on the xz plane, while the text is on the xy plane. When in the game, it renders correctly on the xz plane, but not in the editor. What gives
+
+Make it correct in editor, xz
+
+I want less runtime beautification, for instance, the text is within the mesh at editor time
+
+Anyway for the controls viewport to be visbile in editor, not only in runtime?
+
+A pls
+
+When setting the text of plans and situations dont include the header Plan and Sigtuation
+
+No viewport ui in editor
+
+Still doesnt, what determines its poisitioon, uiviewport? uiquad? I odnt need an outline of its size for sintance
+
+The mesh instance of the uiquad is empty
+
+ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - Invalid call. Nonexistent function 'update_worlds' in base 'SubViewport'.
+  ERROR: res://scripts/plan_card_3d.gd:40 - In
+
+There are game mechanics we havent hit on, recapiluate the game description from teh beginning
+
+Explain the differences between the types of terrain in modern language
+
+It sounds like there are two orthogonal issues, terrain type and whether its yuor land or not. As a side bar, what would make something desperate ground, as oppsoed to hemmed in
+
+OK, in this new setup, there are no game produced situations. During your turn you can create any number of situations. Your opponent does the same. Resolve. The first round of turns its guarenteed that the opposing sides do not occupy the same situations. The next phase, you can elect to withdraw troops from ongoing situations, create new situations, or commit troops to existing situations. No matter what, you always have only 10 divisions, whose strength is your total troop count / number of divisions.
+
+They pick, home/enemy/neutral, open ground/difficult ground/no escape/siege, whether they kick up dust, camp, or march quietly. Situations are shared between players. You cannot have more than one type of cards like "friendly open ground home siege", same from enemy persepctive, if your opponent created a "home open ground siege" then if you create an "enemy open ground siege" then they are collapsed into the same thing.
+
+Every turn youre in enemy territory you gain one thousand troops. Neutral and home does nothing for you.
+
+Stay/win in an enemy siege for three turns in a row and you win.
+
+Open ground makes battles less deadly, difficult ground more deadly, no escape makes it very lethal to losing side. If you are unopposed on a location, how you march changes what your opponent sees for troop count, for instnace 50k marching quietly looks like 1/2 the size, rounded up to 10k increment, camp makes it real number, dust makes 2x the size, rounded up 10k.
+
+When you and your opponent occupy the same situation the battle happens. The actual numbers are used for battles, not multiplied by marching style, but you don't know from which battle your losing numbers, until theres no more troops on your side of a location.
+
+So situations have terrain, player 1/neutral/2, each side has their marching type, each side has a number of divisions commited to it.
+
+Wait, there isnt guaranteed no overlap in the first turn anymore
+
+Siege is a terrain type. Lets call it open, difficult, no escape, city, since youre sieging the city. 1000 per enemy territory, except for cities i guess.
+
+On an even battle, both sides lose half. Double your opponent, you lose 25% they lose 75%, quadruple your opponent: 80:20. Open terrain reduces the losses by half, difficult is normal loses, no retrain makes the smaller side do double casualties, but otherwise normal numbers, siege makes defender do double casualties, otherwise normal.
+
+We only show total losses. It's impossible to "lose everyone from a situation" since it always rebalances to total troop count / division count. Oh, you dont have to use all 10 divisions.
+
+You can always see the enemy total troop count.
+
+Yes automerge. Any other questions
+
+yes cities dont give you anything. The defender of cities is whose it is, so from your perspective committing troops to a city defense makes your troops do 2x casualties.
+Yes, interpolate.
+
+Close, I dont want to reveal what the opposing player did immediately, instead, i take a turn, you take a turn, then we get the results of the round on our subsequent turns.
+
+Yes, filtered.
+
+Wait acutally, show both sides old total, and their new total. Do NOT break down which situation has losses.
+
+When the player 2 takes their first, turn, they should see an empty board, because they do not yet know what the opponent has done, right now they see their opponents move
+
+REmove the enemy signals section, instead, show the supposed troop count there number of divisions count chosen last round * march type chosen last round to give an appoximation. 
+
+So if they chose dust + 3 divisions, and they have 100k troops, then it would show 60k troops. This is a bluff naturally, but its used for deception.
+
+Raise the cards in the z axis so tehy cast a slight shadow
+
+There is no such thing as neutral city, remove it as a possiblity.
+
+Instead of creating new situations, all valid situations are in play. Form a grid, your home situations in the row in front of you, neutral in between, enemy furthest. We no longer need a distinction between plan/situation, combine the interfaces for it.
+
+Remove the numerical increment UI for division count. Instead, show a pool of /scene/Unit's, which are little troops, they all start on your city. When you hover over one's collider, the mesh (but not the collider) lifts. When you click and drag it you can move it to a different situation. Keep the dust setting ui on each situation.
+
+We keep the numerical guess of the enemies number. But now as well, show a number of /scenes/Units that as closely match the number of divisions your opponent has. For instance, if they 100k total, and we suppsoe they have 50k troops on a spot, show 5 Units. Make your units, and the opposing units be on opposite sides of the card.
+
+1. yes, that suggestion, but we dont need grid headers, just the information on the cards.
+2. yes the home+ city card
+3. 10 per player
+4. Multiple units per card, each is a division. Keep the normal process for 3x divisions = 30k (from 100k)
+5. Drag to nowhere puts it back
+
+Youll need to improve the Unit scene with more scaffolding for hte logic
+
+I dont want to convert screenshots from png to txt, but, as a seperate step, to create a new txt for every screenshot that describes whats in it, so that I as the user can see what the ai is thinking.
+
+Yes
+
+Continue with your rework
+
+Instead of creating stuff at runtime, can we do so in the editor? Creating the cards at runtime and setting the camera position feels silly if its always static
+
+Yep
+
+Is card3d still used, if not delete it
+
+Yes, and card3d.gd if it isnt used
+
+Set the screensize to 1920x1080
+
+When its player 1's turn, set the color of the Player 1 Turn text to blue, and the player 2 turn to red
+
+Make the meshes of cards for player 1 blue and the player 2 red
+
+When you lift a unit, play /Users/oliver/Documents/git/art-of-war/resources/Slurp.wav
+When you place a unit, play /Users/oliver/Documents/git/art-of-war/resources/Knock.wav
+When you press next turn, accept turn, play /Users/oliver/Documents/git/art-of-war/resources/NextTurn.wav
+When teh gaem starts, play /Users/oliver/Documents/git/art-of-war/resources/Morgana Rides.mp3
+
+When you click the drop down for march type, and when you select march type, play Click.wav
+
+Im not hearing the slurp sound when i begin dragging a unit
+
+What controls the size of teh units
+
+Remove teh runtime card coloring
+
+Make the music loop.
+
+Add padding of like 6px to resolutonpanel
+
+When you click and drag a unit, the model should always snap its base to your mouse position.
+
+When you're dragging a unit over a card, make the card have an underglow, and play CardHover.wav
+
+The glow is constant, but the CardHover sound only plays once on start of hover
+
+Make the card hover area visible in editor, and toggle its visibility for showing hover
+
+What is the glow called
+
+When setting the hover glow position the rotation is wrong by x90deg
+
+Make it -90
+
+Raise it up along y axis
+
+When you hover over a unit but dont click it, it's model, but not its collision, should raise up higher than if u dragged it, to show its interactibility
+
+The hover glow should be red when its the red players turn
+
+Make the units always yaw towards the camara, despite moving
+
+This rotates the mesh right?
+
+Replace the viewport ui with 2d ui in 3d space.
+
+THe latter
+
+If you dont have divisions on a spot, hide the march controls
+
+This hid the title of the card and the troop counts as well, i just wnat to hide the march controls when there are no friendly divisions
+
+Labels with autowrapping enabled must have a custom minimum size
+
+The terrain/perspective and troop counts arent visible still
+
+<turn_aborted>
+The user interrupted the previous turn on purpose. If any tools/commands were aborted, they may have partially executed; verify current state before retrying.
+</turn_aborted>
+
+Ok from the top, label3d is correct, it shows troop count and the name of the place.
+
+The 3d ui, handled by UI Area/ UIViewport is old and should be removed. Now i want a 2d canvas on a 3d object, that is only visible when you have friendly divisions on a spot, that has a label for how you are marching with a left arrow ot the left of the label, and a right arrow to the right of the label. This cyycles through a looping list of the three possible values.
+
+Dont show march control arrows unless you are hovering over the card
+
+Dont show march controls if (you are hovering AND you are dragging a unit)
+
+If you start dragging a unit while hovering over a card, stop showing marching arrows
+
+I sitll want to see teh march label when i start dragging, just not the arrow
+
+When you are dragging a piece, make it larger, when you put it down return it to normal size.
+
+I only want 5 divisions a side
+
+Instead of Player 1 and Player 2 make it Blue Player and Red Player
+
+Describe the difference, as far as the player is concerned, between open/difficult/no escape lands
+
+When we label tiles, i dont want to say "Home Difficult Terrain" i only want the info about troop counts, wheres that code?
+
+I added a Blue and Red node3d to main, with labels within it, their conents are Red/Blue country. I want it to say Enemy Lands or Homelands depending on your perspective. I have corner emojis, keep those.
+
+Add mouse colliders for each row, and each column that extends across all of the cards in that row/column. When you are hovering, make the label for that row column have larger text.
+
+The colliders hsould be created in the main scenes editor
+
+THere are labels for your capital and the enemies, flip the text values based on your perspective
+
+We already have a city terrian lable blue/red city label
+
+If you have a division on the enemy capital that is victorious or unaccosted for 3 turns in a row, you win teh game. Update the capital label to say how many turns remaining before loss/victory. if you lose a battle or stop having a division there, the timer is reset.
+
+Make the label go up in the y direction slightly when hovering
+
+Make the font growth and y change a smaller change
+
+Create a victory screen that replaces teh resolution screen if a players victory timer reached 0 during that turn. Say RED VICTORY or BLUE VICTORY
+
+For every turn an enemy tile has a vicotorious or unaccosted divsion, you gain 5k total. Update the enemy/homelands label column with this information based on your perspective.
+
+5k per controlled enemy tile
+
+Change the color of BLUE VICTORY to blue and RED VICTORY to red.
+
+Add the total troops gain by looting enemy lands to round resolution
+
+IN the resolution screen, change it from "blue player" to "you" if youre blue, and vice versa. use "they" for opposing player.
+
+Generally improve the organization of this information.
+
+Make the column and row header size and position changes even subtler
+
+I don't like the way you presented the information and looting and losses like its homework. Instead say, "You killed x of their troops and lost 0. You stole x troops."
+
+Then, show your old troop total and their old troop total side by side, colored by player. Then animated the numbers going down/up to their new totals by changing the digits by one incredibly rapidly untily you reach the new total. This aniimation should take less than a second. Change the resolution screens button text from "Accept Turn" to "Continue". HIde hte continue button intially, once the animation is done, enable the continue button
+
+Dont start the animation imediately, way a half second
+
+Make the animation take 2 seconds once begun, when you begin play /resources/LifePoints.wav
+
+The sound plays before the animation begins. The sound should play after the way, when the number animating begins
+
+When you show the victory screen, stop the music and play Victory.wav
+
+Make the color of the victory text match the color of who won. Make the troop animation last 1.5 seconds not 2. If neither side lost or gained troops, dont animate the total or play the sound, just immediately show the continue button.
+
+During the red players turn, the blue units are colored red by mistake
+
+I added a margin container to main, Invalid access to property or key 'pressed' on a base object of type 'null instance'. Help me rewire it
+
+Write every message I have written to you in this conversation to script.txt
+
+Add main menu with Play, How to Play, Credits, Quit
+
+Make a new screen for how to play and credit, and make quit leave the game. In the credits, list me Oliver Barnum as the designer, Kevin Macleod as the producer of Morgana Rides, the theme music, FreeSound for source of creative commons sound effects, and Codex/OpenAi as the producer of the code. Add a button on the Credits screen that opens the ./script.txt file in a scrollable text. 
+
+In the how play, explain how to play in the game in your own words.
+
+Add a paramater to the exe/app called --skip-main-menu that skips the main menu, use that for testing, add to agents.md
+
+Add a back to main menu button on the victory screen.
+
+Make the music loop
+
+When press back to main menu button it just repeat the victory sound effect, i need it to reset the gaem state and show the main menu.
+
+Blue palyer should be first on game reset, when teh gaem resets, it shows the red players units painted blue
+
+If no one is occupying your capital dont show rounds until loss timer
+
+When we go back to main menu i need the game state reset, so all 5 troosp back to their capitals.
+
+Add whose turn is about to begin (with colored text) to the accept turn screen
+
+Reset troop counts to 10000
+
+Woops, i meant 100,000
+
+And this value should be reset when u return to main menu
+
+Ive update the rules, create a table of terrain and kill ratios beneath the rules
+
+Nah use nodes that actually create a table, not a textbox
+
+Add the main rules description how battles go without modifiers, how the math works
+
+Add resources/logo.png center on teh main menu screen
+
+The height of the menu logo is 0
+
+Center the logo, its left aligned
+
+The logo takes up the whole widht, but the contents are left aligned
+
+1
+
+Make the shader move

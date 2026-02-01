@@ -93,11 +93,13 @@ def _has_screenshot(tests: List[Tuple[Path, List[dict]]]) -> bool:
     return False
 
 
-def _start_godot(godot_path: Path, project_path: Path, headless: bool, port: Optional[int]) -> Tuple[subprocess.Popen, queue.Queue, threading.Thread]:
+def _start_godot(godot_path: Path, project_path: Path, headless: bool, port: Optional[int], skip_menu: bool) -> Tuple[subprocess.Popen, queue.Queue, threading.Thread]:
     cmd = [str(godot_path), "--path", str(project_path)]
     if headless:
         cmd.append("--headless")
     cmd.append("--")
+    if skip_menu:
+        cmd.append("--skip-main-menu")
     if port is None:
         cmd.append("--agent-tcp")
     else:
@@ -221,6 +223,7 @@ def main() -> int:
             project_path=project_path,
             headless=headless,
             port=args.port,
+            skip_menu=True,
         )
         port = args.port
         if port is None:

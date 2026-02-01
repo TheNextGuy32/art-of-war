@@ -64,6 +64,7 @@ var _hovered_controls_card := -1
 @onready var _end_turn_button: Button = $UI/HUD/EndTurnButton
 @onready var _overlay: Control = $UI/TurnOverlay
 @onready var _accept_button: Button = $UI/TurnOverlay/AcceptTurnButton
+@onready var _accept_label: Label = $UI/TurnOverlay/AcceptTurnLabel
 @onready var _resolution_overlay: Control = $UI/ResolutionOverlay
 @onready var _resolution_summary: Label = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionSummary
 @onready var _resolution_you_total: Label = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionTotals/YouTotalLabel
@@ -71,6 +72,20 @@ var _hovered_controls_card := -1
 @onready var _resolution_accept: Button = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionAcceptButton
 @onready var _victory_overlay: Control = $UI/VictoryOverlay
 @onready var _victory_label: Label = $UI/VictoryOverlay/VictoryLabel
+@onready var _victory_menu_button: Button = $UI/VictoryOverlay/VictoryMenuButton
+@onready var _main_menu: Control = $UI/MainMenu
+@onready var _menu_play: Button = $UI/MainMenu/MenuBox/PlayButton
+@onready var _menu_howto: Button = $UI/MainMenu/MenuBox/HowToPlayButton
+@onready var _menu_credits: Button = $UI/MainMenu/MenuBox/CreditsButton
+@onready var _menu_quit: Button = $UI/MainMenu/MenuBox/QuitButton
+@onready var _howto_screen: Control = $UI/HowToPlay
+@onready var _howto_back: Button = $UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToBackButton
+@onready var _credits_screen: Control = $UI/Credits
+@onready var _credits_back: Button = $UI/Credits/CreditsPanel/CreditsMargin/CreditsBox/CreditsBackButton
+@onready var _credits_script: Button = $UI/Credits/CreditsPanel/CreditsMargin/CreditsBox/CreditsScriptButton
+@onready var _script_overlay: Control = $UI/ScriptOverlay
+@onready var _script_text: TextEdit = $UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox/ScriptScroll/ScriptText
+@onready var _script_close: Button = $UI/ScriptOverlay/ScriptPanel/ScriptMargin/ScriptBox/ScriptCloseButton
 @onready var _sfx_player: AudioStreamPlayer = $Audio/SfxPlayer
 @onready var _music_player: AudioStreamPlayer = $Audio/MusicPlayer
 @onready var _red_land_label: Label3D = $Red/Label3D
@@ -112,6 +127,7 @@ var _hover_col_key := ""
 var _hover_label_boost := 3
 var _hover_label_y := 0.02
 var _resolution_tween: Tween = null
+var _ui_blocked := false
 
 func _ready() -> void:
 	add_to_group("game_controller")
@@ -126,6 +142,16 @@ func _ready() -> void:
 	_end_turn_button.pressed.connect(_on_end_turn_pressed)
 	_accept_button.pressed.connect(_on_accept_turn_pressed)
 	_resolution_accept.pressed.connect(_on_accept_resolution_pressed)
+	if _victory_menu_button != null:
+		_victory_menu_button.pressed.connect(_on_menu_back)
+	_menu_play.pressed.connect(_on_menu_play)
+	_menu_howto.pressed.connect(_on_menu_howto)
+	_menu_credits.pressed.connect(_on_menu_credits)
+	_menu_quit.pressed.connect(_on_menu_quit)
+	_howto_back.pressed.connect(_on_menu_back)
+	_credits_back.pressed.connect(_on_menu_back)
+	_credits_script.pressed.connect(_on_menu_script)
+	_script_close.pressed.connect(_on_menu_script_close)
 	if _agent != null and _agent.has_method("set_game_controller"):
 		_agent.set_game_controller(self)
 	_update_agent_state()
@@ -135,6 +161,14 @@ func _ready() -> void:
 	_hover_glow = $World/HoverGlow
 	if _hover_glow != null:
 		_hover_glow.visible = false
+	if _should_skip_main_menu():
+		_start_game_from_menu()
+	else:
+		_show_main_menu()
+
+func _should_skip_main_menu() -> bool:
+	var args = OS.get_cmdline_args()
+	return args.has("--skip-main-menu")
 
 func _build_hit_marker() -> void:
 	_hit_marker = MeshInstance3D.new()
@@ -155,6 +189,8 @@ func _process(_delta: float) -> void:
 	pass
 
 func _input(event: InputEvent) -> void:
+	if _ui_blocked:
+		return
 	if _awaiting_accept or _awaiting_resolution:
 		return
 	if event is InputEventMouseButton:
@@ -523,6 +559,8 @@ func _play_music_start() -> void:
 		return
 	if _music_intro is AudioStreamMP3:
 		_music_intro.loop = true
+	elif _music_intro.has_property("loop"):
+		_music_intro.set("loop", true)
 	_music_player.stop()
 	_music_player.stream = _music_intro
 	_music_player.play()
@@ -608,9 +646,10 @@ func _build_unit_pool() -> void:
 		$World.add_child(_unit_pool_root)
 	for child in _unit_pool_root.get_children():
 		if child != null and child.is_in_group("unit_token"):
-			var owner = int(child.owner_id)
+			var owner = _normalize_unit_owner(child)
 			if owner < 0 or owner > 1:
 				owner = 0
+			child.owner_id = owner
 			_units_by_player[owner].append(child)
 	for player_idx in range(2):
 		if _units_by_player[player_idx].size() > troop_divisor_max:
@@ -636,10 +675,32 @@ func _build_unit_pool() -> void:
 	_sync_divisions_from_units(0)
 	_sync_divisions_from_units(1)
 
+func _normalize_unit_owner(unit: Node) -> int:
+	if unit == null:
+		return 0
+	if unit.name.find("_P2_") != -1 or unit.name.find("_p2_") != -1:
+		return 1
+	if unit.name.find("_P1_") != -1 or unit.name.find("_p1_") != -1:
+		return 0
+	if unit.has_method("get"):
+		var value = unit.get("owner_id")
+		if typeof(value) == TYPE_INT:
+			return int(value)
+	return 0
+
 func _update_display() -> void:
+	var show_hud = not _ui_blocked
+	$UI/HUD.visible = show_hud
+	if not show_hud:
+		_overlay.visible = false
+		_resolution_overlay.visible = false
+		_victory_overlay.visible = false
 	var player_name = "Blue Player" if _current_player == 0 else "Red Player"
 	_turn_label.text = "%s Turn" % player_name
 	_turn_label.add_theme_color_override("font_color", _player_color(_current_player))
+	if _accept_label != null:
+		_accept_label.text = "%s Turn" % player_name
+		_accept_label.add_theme_color_override("font_color", _player_color(_current_player))
 	_update_land_labels()
 	_update_city_labels()
 	var total_troops: int = _players[_current_player]["total_troops"]
@@ -664,6 +725,8 @@ func _update_display() -> void:
 	_update_resolution_overlay()
 
 func _play_victory() -> void:
+	if _winner < 0:
+		return
 	if _music_player != null and _music_player.playing:
 		_music_player.stop()
 	_play_sfx(_sfx_victory)
@@ -686,7 +749,9 @@ func _update_city_labels() -> void:
 	var enemy_idx = 1 - _current_player
 	var turns_to_win = max(0, 3 - _siege_streaks[_current_player])
 	var turns_to_lose = max(0, 3 - _siege_streaks[enemy_idx])
-	var defend_text = "┌ Defend Your Capital ┐\n%d Turns Until Loss\n" % turns_to_lose
+	var defend_text = "┌ Defend Your Capital ┐\n"
+	if _siege_streaks[enemy_idx] > 0:
+		defend_text += "%d Turns Until Loss\n" % turns_to_lose
 	var attack_text = "Win or Occupy \nEnemy Capital for\n ┌ %d Turns to Win ┐\n" % turns_to_win
 	if blue_home:
 		_blue_city_label.text = defend_text
@@ -1208,6 +1273,92 @@ func _begin_resolution_for_current() -> void:
 	_awaiting_resolution = true
 	if _winner < 0:
 		_start_resolution_animation()
+
+func _show_main_menu() -> void:
+	_ui_blocked = true
+	_main_menu.visible = true
+	_howto_screen.visible = false
+	_credits_screen.visible = false
+	_script_overlay.visible = false
+	_update_display()
+
+func _start_game_from_menu() -> void:
+	_ui_blocked = false
+	_main_menu.visible = false
+	_howto_screen.visible = false
+	_credits_screen.visible = false
+	_script_overlay.visible = false
+	_update_display()
+
+func _show_howto() -> void:
+	_ui_blocked = true
+	_main_menu.visible = false
+	_howto_screen.visible = true
+	_credits_screen.visible = false
+	_script_overlay.visible = false
+	_update_display()
+
+func _show_credits() -> void:
+	_ui_blocked = true
+	_main_menu.visible = false
+	_howto_screen.visible = false
+	_credits_screen.visible = true
+	_script_overlay.visible = false
+	_update_display()
+
+func _show_script_overlay() -> void:
+	_ui_blocked = true
+	_script_overlay.visible = true
+	if _script_text != null:
+		var file = FileAccess.open("res://script.txt", FileAccess.READ)
+		if file != null:
+			_script_text.text = file.get_as_text()
+			file.close()
+		else:
+			_script_text.text = "Failed to load script.txt"
+	_update_display()
+
+func _hide_script_overlay() -> void:
+	_script_overlay.visible = false
+	_update_display()
+
+func _on_menu_play() -> void:
+	_start_game_from_menu()
+
+func _on_menu_howto() -> void:
+	_show_howto()
+
+func _on_menu_credits() -> void:
+	_show_credits()
+
+func _on_menu_quit() -> void:
+	get_tree().quit()
+
+func _on_menu_back() -> void:
+	_gather_cards()
+	_init_game()
+	_build_unit_pool()
+	_reset_units_to_home()
+	_cache_label_sizes()
+	_winner = -1
+	_update_display()
+	_show_main_menu()
+
+func _reset_units_to_home() -> void:
+	for player_idx in range(2):
+		var home_idx = _home_city_index(player_idx)
+		for unit in _units_by_player[player_idx]:
+			if unit != null:
+				unit.assigned_situation = home_idx
+	_sync_divisions_from_units(0)
+	_sync_divisions_from_units(1)
+	_update_unit_positions()
+
+func _on_menu_script() -> void:
+	_show_script_overlay()
+
+func _on_menu_script_close() -> void:
+	_hide_script_overlay()
 
 func _start_resolution_animation() -> void:
 	if _resolution_accept == null or _resolution_you_total == null or _resolution_they_total == null:

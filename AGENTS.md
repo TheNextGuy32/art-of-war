@@ -17,6 +17,8 @@ python tools/agent_tcp_test.py tests/agent
 This script starts Godot with the required parameter and connects to the local TCP server.
 If any test uses the `screenshot` command, the runner will automatically disable headless mode.
 
+When running tests, pass the `--skip-main-menu` flag to Godot so the main menu is skipped.
+
 ### Agent TCP parameter
 
 The TCP server is only started when one of the following parameters is passed to Godot:
@@ -69,3 +71,7 @@ When a test includes a `screenshot` command, run the test with Godot visible (no
 3) The additional detailed `.txt` description exists and matches what is visible in the screenshot.
 
 Include these checks as part of the test command you run (use the test file that includes `screenshot`) and confirm the description text matches what the test requested.
+
+### Conversation logging (required)
+
+Append every user message in this conversation to `script.txt` in the project root. Each new user message should be appended as its own entry in order and should not overwrite prior content.
