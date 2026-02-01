@@ -77,7 +77,6 @@ var _hovered_controls_card := -1
 @onready var _menu_play: Button = $UI/MainMenu/MenuBox/PlayButton
 @onready var _menu_howto: Button = $UI/MainMenu/MenuBox/HowToPlayButton
 @onready var _menu_credits: Button = $UI/MainMenu/MenuBox/CreditsButton
-@onready var _menu_quit: Button = $UI/MainMenu/MenuBox/QuitButton
 @onready var _howto_screen: Control = $UI/HowToPlay
 @onready var _howto_back: Button = $UI/HowToPlay/HowToPanel/HowToMargin/HowToBox/HowToBackButton
 @onready var _credits_screen: Control = $UI/Credits
@@ -147,7 +146,6 @@ func _ready() -> void:
 	_menu_play.pressed.connect(_on_menu_play)
 	_menu_howto.pressed.connect(_on_menu_howto)
 	_menu_credits.pressed.connect(_on_menu_credits)
-	_menu_quit.pressed.connect(_on_menu_quit)
 	_howto_back.pressed.connect(_on_menu_back)
 	_credits_back.pressed.connect(_on_menu_back)
 	_credits_script.pressed.connect(_on_menu_script)
@@ -1310,7 +1308,7 @@ func _show_script_overlay() -> void:
 	_ui_blocked = true
 	_script_overlay.visible = true
 	if _script_text != null:
-		var file = FileAccess.open("res://script.txt", FileAccess.READ)
+		var file = FileAccess.open("res://data/script.txt", FileAccess.READ)
 		if file != null:
 			_script_text.text = file.get_as_text()
 			file.close()
@@ -1331,8 +1329,6 @@ func _on_menu_howto() -> void:
 func _on_menu_credits() -> void:
 	_show_credits()
 
-func _on_menu_quit() -> void:
-	get_tree().quit()
 
 func _on_menu_back() -> void:
 	_gather_cards()

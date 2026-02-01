@@ -552,3 +552,9 @@ The logo takes up the whole widht, but the contents are left aligned
 1
 
 Make the shader move
+
+Remove the quit button from main menu. Move the script.txt into a place that will be included in the project. Make sure the html export option supports it.
+
+When i load the game's export with a python server, i get `Failed to load script.txt`
+
+Fixed that. Fill the how to play screen so it takes up the whole screen with a margin

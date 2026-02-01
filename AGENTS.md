@@ -74,4 +74,4 @@ Include these checks as part of the test command you run (use the test file that
 
 ### Conversation logging (required)
 
-Append every user message in this conversation to `script.txt` in the project root. Each new user message should be appended as its own entry in order and should not overwrite prior content.
+Append every user message in this conversation to `res://data/script.txt`. Each new user message should be appended as its own entry in order and should not overwrite prior content.
