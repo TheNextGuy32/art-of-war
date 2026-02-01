@@ -55,11 +55,17 @@ Screenshots are saved under `res://tmp/`. For every screenshot `bug.png`, the se
 `bug_description.txt` containing the provided one-sentence description. The response includes absolute paths:
 `path` and `description_path` so the agent can confirm creation.
 
+In addition, for every screenshot taken in a test, create a separate `.txt` file alongside it that contains a
+more detailed, human-readable description of what the screenshot shows. This `.txt` file is for the user to
+review and should not replace or modify the `.png` image. The description should be more than one sentence when
+needed to capture visual details, layout, and any issues being verified.
+
 ### Screenshot test verification (required)
 
 When a test includes a `screenshot` command, run the test with Godot visible (non-headless) and then **manually verify**:
 
 1) The screenshot file under `res://tmp/` is not black/blank and matches the expected view.
-2) The sibling `*_description.png` file contains the correct one-sentence description (open it as a text file).
+2) The sibling `*_description.txt` file contains the correct one-sentence description (open it as a text file).
+3) The additional detailed `.txt` description exists and matches what is visible in the screenshot.
 
 Include these checks as part of the test command you run (use the test file that includes `screenshot`) and confirm the description text matches what the test requested.

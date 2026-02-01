@@ -1,9 +1,7 @@
 [
   {"type":"command","name":"game_reset"},
-  {"type":"command","name":"game_add_situation","terrain":"open","perspective":"home"},
-  {"type":"command","name":"game_click_plan_ui","terrain":0,"target":"plus","hitmarker":true},
-  {"type":"command","name":"game_click_plan_ui","terrain":0,"target":"plus"},
-  {"type":"command","name":"game_click_plan_ui","terrain":0,"target":"minus"},
-  {"type":"assert","op":"equals","key":"plan_divisions_p1","expected":[1.0]},
-  {"type":"command","name":"game_hide_hitmarker"}
+  {"type":"command","name":"game_assign_unit","unit":0,"situation":0},
+  {"type":"command","name":"game_assign_unit","unit":1,"situation":0},
+  {"type":"command","name":"game_set_march","terrain":0,"march_type":2},
+  {"type":"assert","op":"equals","key":"plan_divisions_p1","expected":[2.0,0.0,0.0,8.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}
 ]

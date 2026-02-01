@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=4 uid="uid://bpn3klb7jrb8m"]
+[gd_scene load_steps=7 format=4 uid="uid://bpn3klb7jrb8m"]
 
 [ext_resource type="PackedScene" uid="uid://bwtc44tlvnqby" path="res://resources/models/unit.glb" id="1_h85lg"]
+[ext_resource type="Script" uid="uid://c4vjrlpn2jryy" path="res://scripts/unit_token.gd" id="2_q1hi7"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fqlnf"]
 albedo_color = Color(0.48, 0.2392, 0.0672, 1)
@@ -37,13 +38,27 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_aa524")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(0.33, 1.36, 0.28)
+
 [node name="Unit" type="Node3D"]
+script = ExtResource("2_q1hi7")
+hover_lift = 0.12
+drag_lift = null
 
 [node name="unit" parent="." instance=ExtResource("1_h85lg")]
-transform = Transform3D(0.24, 0, 0, 0, 0.24, 0, 0, 0, 0.24, -0.0159718, -0.00741172, 0.0151894)
+transform = Transform3D(-6.99382e-09, 0, 0.16, 0, 0.16, 0, -0.16, 0, -6.99382e-09, -0.0159718, -0.00741172, 0.0151894)
 
 [node name="Cube" parent="unit" index="0"]
 transform = Transform3D(0.109174, 0, 0, 0, 1, 0, 0, 0, 1, 0.0395422, 2.2915, 0.00757587)
 mesh = SubResource("ArrayMesh_nqku5")
+
+[node name="HitArea" type="Area3D" parent="."]
+collision_layer = 4
+collision_mask = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00262493, 0.6164, 0.00536323)
+shape = SubResource("BoxShape3D_1")
 
 [editable path="unit"]

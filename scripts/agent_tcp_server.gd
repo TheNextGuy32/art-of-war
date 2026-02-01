@@ -188,6 +188,9 @@ func _handle_command(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 	elif name == "screenshot":
 		_handle_screenshot(peer, msg, msg_id)
 		return
+	elif name == "write_screenshot_details":
+		_handle_screenshot_details(peer, msg, msg_id)
+		return
 	elif name == "quit":
 		_send_response(peer, msg_id, {"ok": true})
 		get_tree().quit()
@@ -284,6 +287,36 @@ func _handle_screenshot(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
 		"type": "screenshot_saved",
 		"path": screenshot_path,
 		"description_path": description_path
+	})
+
+func _handle_screenshot_details(peer: StreamPeerTCP, msg: Dictionary, msg_id) -> void:
+	var filename_raw := str(msg.get("filename", msg.get("path", "")))
+	if filename_raw == "":
+		_send_error(peer, msg_id, "missing_filename", "Command 'write_screenshot_details' requires 'filename'.")
+		return
+	var details := str(msg.get("details", msg.get("description", "")))
+	if details == "":
+		_send_error(peer, msg_id, "missing_details", "Command 'write_screenshot_details' requires 'details'.")
+		return
+	var filename := _sanitize_filename(filename_raw)
+	if filename.to_lower().ends_with(".png"):
+		filename = filename.get_basename()
+	var details_name := "%s_details.txt" % filename
+	var dir_path := ProjectSettings.globalize_path(TMP_DIR)
+	var details_path := ProjectSettings.globalize_path("%s/%s" % [TMP_DIR, details_name])
+	if not _ensure_dir(dir_path):
+		_send_error(peer, msg_id, "dir_error", "Failed to create tmp directory.")
+		return
+	var file = FileAccess.open(details_path, FileAccess.WRITE)
+	if file == null:
+		_send_error(peer, msg_id, "save_error", "Failed to save details file.")
+		return
+	file.store_string(details)
+	file.close()
+	_send_response(peer, msg_id, {
+		"ok": true,
+		"type": "screenshot_details_saved",
+		"path": details_path
 	})
 
 func _send_response(peer: StreamPeerTCP, msg_id, payload: Dictionary) -> void:

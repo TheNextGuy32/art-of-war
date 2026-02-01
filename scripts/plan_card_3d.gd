@@ -7,6 +7,9 @@ extends Node3D
 @export var ui_quad_size := Vector2(2.4, 0.9)
 @export var ui_viewport_size := Vector2i(1280, 420)
 @export var ui_hit_height := 0.6
+@export var situation_index := 0
+@export var terrain := "open"
+@export var owner_key := "neutral"
 
 @onready var _card_mesh: MeshInstance3D = $CardMesh
 @onready var _label: Label3D = $Label3D
@@ -15,6 +18,10 @@ extends Node3D
 @onready var _ui_root: Control = $UIViewport/UIRoot
 @onready var _ui_area: Area3D = $UIArea
 @onready var _ui_collision: CollisionShape3D = $UIArea/CollisionShape3D
+@onready var _card_area: Area3D = $CardArea
+@onready var _card_collision: CollisionShape3D = $CardArea/CardCollision
+@onready var _own_units_anchor: Node3D = $OwnUnitsAnchor
+@onready var _enemy_units_anchor: Node3D = $EnemyUnitsAnchor
 
 func _ready() -> void:
 	if _card_mesh.mesh == null:
@@ -61,6 +68,10 @@ func _setup_ui_surface() -> void:
 	_ui_area.rotation_degrees = _ui_quad.rotation_degrees
 	_ui_area.collision_layer = 1
 	_ui_area.collision_mask = 1
+	if _card_area != null:
+		_card_area.collision_layer = 2
+		_card_area.collision_mask = 2
+		_card_area.input_ray_pickable = true
 	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_ui_root.size = Vector2(ui_viewport_size.x, ui_viewport_size.y)
 
@@ -80,6 +91,15 @@ func get_ui_viewport() -> SubViewport:
 
 func get_ui_area() -> Area3D:
 	return _ui_area
+
+func get_card_area() -> Area3D:
+	return _card_area
+
+func get_own_units_anchor() -> Node3D:
+	return _own_units_anchor
+
+func get_enemy_units_anchor() -> Node3D:
+	return _enemy_units_anchor
 
 func ui_viewport_size_vec() -> Vector2:
 	return Vector2(ui_viewport_size.x, ui_viewport_size.y)

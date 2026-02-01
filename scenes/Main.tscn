@@ -1,16 +1,48 @@
-[gd_scene load_steps=6 format=3 uid="uid://bdfdsw2iykl7y"]
+[gd_scene load_steps=18 format=3 uid="uid://bdfdsw2iykl7y"]
 
 [ext_resource type="Script" uid="uid://dhxeqcdxkuw72" path="res://scripts/game_controller.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://bpn3klb7jrb8m" path="res://scenes/Unit.tscn" id="2_rvslj"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.18, 0.18, 0.18, 1)
-roughness = 0.95
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_1"]
-size = Vector2(1, 1)
+[ext_resource type="PackedScene" uid="uid://yrr85mbbtwta" path="res://scenes/PlanCard3D.tscn" id="2_card"]
+[ext_resource type="PackedScene" uid="uid://bpn3klb7jrb8m" path="res://scenes/Unit.tscn" id="3_unit"]
+[ext_resource type="Theme" uid="uid://d1r8ipdd0v3fi" path="res://resources/GameStateTheme.tres" id="4_c01mt"]
+[ext_resource type="PackedScene" uid="uid://cum7g144133e2" path="res://scenes/RedCity.tscn" id="4_rarhs"]
+[ext_resource type="PackedScene" uid="uid://b21m0jy8mkfll" path="res://scenes/BlueCity.tscn" id="5_vcsgt"]
+[ext_resource type="PackedScene" uid="uid://kowr2eagr4nd" path="res://scenes/tree.tscn" id="7_nxtc6"]
 
 [sub_resource type="Environment" id="Environment_rvslj"]
+ambient_light_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0bbpv"]
+albedo_color = Color(0.0667549, 0.066755, 0.066755, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rarhs"]
+material = SubResource("StandardMaterial3D_0bbpv")
+size = Vector3(30, 1, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rarhs"]
+albedo_color = Color(0.330359, 0.120226, 0.124126, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vcsgt"]
+material = SubResource("StandardMaterial3D_rarhs")
+size = Vector3(30, 1, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c01mt"]
+albedo_color = Color(0.118555, 0.186735, 0.36397, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nxtc6"]
+material = SubResource("StandardMaterial3D_c01mt")
+size = Vector3(30, 1, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glow"]
+transparency = 1
+depth_draw_mode = 2
+shading_mode = 0
+albedo_color = Color(0.35, 0.6, 1, 0.35)
+
+[sub_resource type="QuadMesh" id="QuadMesh_glow"]
+size = Vector2(2.8, 1.8)
+
+[sub_resource type="Theme" id="Theme_vcsgt"]
+default_font_size = 54
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1")
@@ -18,22 +50,228 @@ script = ExtResource("1")
 [node name="World" type="Node3D" parent="."]
 
 [node name="Camera3D" type="Camera3D" parent="World"]
-transform = Transform3D(1, 0, 0, 0, 0.436645, 0.899634, 0, -0.899634, 0.436645, 0, 4.80302, 2.76378)
+transform = Transform3D(1, 0, 0, 0, 0.365543, 0.930794, 0, -0.930794, 0.365543, -0.0199137, 6.21156, 3.26635)
+fov = 70.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
-transform = Transform3D(0.824145, -0.318361, 0.465347, 0, 0.824145, 0.563828, -0.563827, -0.465347, 0.680196, 0, 0, 0)
+transform = Transform3D(0.824912, -0.319498, 0.466305, 0.000929887, 0.825704, 0.564103, -0.56526, -0.464902, 0.68143, 0, 0, 0)
 light_energy = 1.6
 shadow_enabled = true
+shadow_opacity = 0.7
 
 [node name="CardsRoot" type="Node3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.135561, 0)
 
-[node name="Table" type="MeshInstance3D" parent="World"]
-transform = Transform3D(6.5, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0)
-material_override = SubResource("StandardMaterial3D_1")
-mesh = SubResource("PlaneMesh_1")
+[node name="Card_Home_Open" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, 2.8)
+card_color = Color(0.94, 0.9, 0.78, 1)
+situation_index = 0
+terrain = "open"
+owner_key = "p1"
+
+[node name="Card_Home_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.14, 2.8)
+card_color = Color(0.85, 0.85, 0.85, 1)
+situation_index = 1
+terrain = "difficult"
+owner_key = "p1"
+
+[node name="Card_Home_NoEscape" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.14, 2.8)
+card_color = Color(0.82, 0.78, 0.76, 1)
+situation_index = 2
+terrain = "no_escape"
+owner_key = "p1"
+
+[node name="Card_Home_City" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 0.14, 2.8)
+card_color = Color(0.78, 0.86, 0.92, 1)
+situation_index = 3
+terrain = "city"
+owner_key = "p1"
+
+[node name="Card_Neutral_Open" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, 0)
+card_color = Color(0.94, 0.9, 0.78, 1)
+situation_index = 4
+terrain = "open"
+owner_key = "neutral"
+
+[node name="Card_Neutral_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.14, 0)
+card_color = Color(0.85, 0.85, 0.85, 1)
+situation_index = 5
+terrain = "difficult"
+owner_key = "neutral"
+
+[node name="Card_Neutral_NoEscape" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.14, 0)
+card_color = Color(0.82, 0.78, 0.76, 1)
+situation_index = 6
+terrain = "no_escape"
+owner_key = "neutral"
+
+[node name="Card_Enemy_Open" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, -2.8)
+card_color = Color(0.94, 0.9, 0.78, 1)
+situation_index = 7
+terrain = "open"
+owner_key = "p2"
+
+[node name="Card_Enemy_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.14, -2.8)
+card_color = Color(0.85, 0.85, 0.85, 1)
+situation_index = 8
+terrain = "difficult"
+owner_key = "p2"
+
+[node name="Card_Enemy_NoEscape" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.14, -2.8)
+card_color = Color(0.82, 0.78, 0.76, 1)
+situation_index = 9
+terrain = "no_escape"
+owner_key = "p2"
+
+[node name="Card_Enemy_City" parent="World/CardsRoot" instance=ExtResource("2_card")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 0.14, -2.8)
+card_color = Color(0.78, 0.86, 0.92, 1)
+situation_index = 10
+terrain = "city"
+owner_key = "p2"
+
+[node name="UnitPool" type="Node3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.229589, 0)
+
+[node name="Unit_P1_01" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_02" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_03" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_04" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_05" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_06" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_07" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_08" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_09" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P1_10" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+
+[node name="Unit_P2_01" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_02" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_03" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_04" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_05" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 3)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_06" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_07" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_08" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_09" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
+
+[node name="Unit_P2_10" parent="World/UnitPool" instance=ExtResource("3_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 2.6)
+hover_lift = 0.12
+drag_lift = null
+owner_id = 1
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="World"]
 environment = SubResource("Environment_rvslj")
+
+[node name="Table" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0122299, -0.506221, 0.00680256)
+mesh = SubResource("BoxMesh_rarhs")
+
+[node name="RedSide" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, -0.518, -4.5)
+mesh = SubResource("BoxMesh_vcsgt")
+
+[node name="BlueSide" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, -0.518, 4.5)
+mesh = SubResource("BoxMesh_nxtc6")
+
+[node name="HoverGlow" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
+material_override = SubResource("StandardMaterial3D_glow")
+cast_shadow = 0
+mesh = SubResource("QuadMesh_glow")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -46,7 +284,8 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="HUDBox" type="VBoxContainer" parent="UI/HUD"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.02
 anchor_top = 0.02
 anchor_right = 0.4
@@ -54,50 +293,24 @@ anchor_bottom = 0.4
 
 [node name="TurnLabel" type="Label" parent="UI/HUD/HUDBox"]
 layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 38
 text = "Player 1 Turn"
 
 [node name="TroopsLabel" type="Label" parent="UI/HUD/HUDBox"]
 layout_mode = 2
+theme = ExtResource("4_c01mt")
 text = "Total Troops: 100000"
 
 [node name="EnemyTroopsLabel" type="Label" parent="UI/HUD/HUDBox"]
 layout_mode = 2
+theme = ExtResource("4_c01mt")
 text = "Enemy Troops: 100000"
 
 [node name="LossLabel" type="Label" parent="UI/HUD/HUDBox"]
 layout_mode = 2
+theme = ExtResource("4_c01mt")
 text = "Losses Last Turn: 0"
-
-[node name="RemainingLabel" type="Label" parent="UI/HUD/HUDBox"]
-layout_mode = 2
-text = "Divisions Remaining: 10"
-
-[node name="SituationControls" type="HBoxContainer" parent="UI/HUD/HUDBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="TerrainSelect" type="OptionButton" parent="UI/HUD/HUDBox/SituationControls"]
-layout_mode = 2
-
-[node name="PerspectiveSelect" type="OptionButton" parent="UI/HUD/HUDBox/SituationControls"]
-layout_mode = 2
-
-[node name="AddSituationButton" type="Button" parent="UI/HUD/HUDBox/SituationControls"]
-layout_mode = 2
-text = "Add Situation"
-
-[node name="PlanScroll" type="ScrollContainer" parent="UI/HUD"]
-visible = false
-layout_mode = 0
-anchor_left = 0.02
-anchor_top = 0.35
-anchor_right = 0.98
-anchor_bottom = 0.82
-
-[node name="PlanList" type="VBoxContainer" parent="UI/HUD/PlanScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 
 [node name="EndTurnButton" type="Button" parent="UI/HUD"]
 layout_mode = 0
@@ -105,16 +318,8 @@ anchor_left = 0.02
 anchor_top = 0.85
 anchor_right = 0.25
 anchor_bottom = 0.95
+theme = SubResource("Theme_vcsgt")
 text = "End Turn"
-
-[node name="PlanControlsRoot" type="Control" parent="UI"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
 
 [node name="TurnOverlay" type="Control" parent="UI"]
 visible = false
@@ -138,6 +343,7 @@ anchor_left = 0.4
 anchor_top = 0.45
 anchor_right = 0.6
 anchor_bottom = 0.55
+theme_override_font_sizes/font_size = 48
 text = "Accept Turn"
 
 [node name="ResolutionOverlay" type="Control" parent="UI"]
@@ -157,7 +363,8 @@ anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.9)
 
 [node name="ResolutionPanel" type="PanelContainer" parent="UI/ResolutionOverlay"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.2
 anchor_top = 0.15
 anchor_right = 0.8
@@ -170,6 +377,7 @@ size_flags_vertical = 3
 
 [node name="ResolutionTitle" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 51
 text = "Battle Resolution"
 
 [node name="ResolutionList" type="VBoxContainer" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
@@ -179,7 +387,39 @@ size_flags_vertical = 3
 
 [node name="ResolutionAcceptButton" type="Button" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
 layout_mode = 2
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 61
 text = "Accept Turn"
 
-[node name="Unit" parent="." instance=ExtResource("2_rvslj")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -0.381253, 0, 0.80617)
+[node name="Audio" type="Node" parent="."]
+
+[node name="SfxPlayer" type="AudioStreamPlayer" parent="Audio"]
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="Audio"]
+
+[node name="city" parent="." instance=ExtResource("4_rarhs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.74781, -0.05985, -2.76556)
+
+[node name="city2" parent="." instance=ExtResource("5_vcsgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.71571, -0.0966078, 2.8936)
+
+[node name="tree" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -3.08719, 0, 2.07634)
+
+[node name="tree2" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, -2.71305, 0, 1.53432)
+
+[node name="tree6" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, 0.083384, 0, 4.12181)
+
+[node name="tree7" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.29, 0, 0, 0, 0.29, 0, 0, 0, 0.29, -0.624589, 0, 4.30097)
+
+[node name="tree3" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.39, 0, 0, 0, 0.39, 0, 0, 0, 0.39, -0.914936, 0, -0.983918)
+
+[node name="tree4" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -2.83201, 0, -4.16985)
+
+[node name="tree5" parent="." instance=ExtResource("7_nxtc6")]
+transform = Transform3D(0.39, 0, 0, 0, 0.39, 0, 0, 0, 0.39, -2.30136, 0, -4.95157)

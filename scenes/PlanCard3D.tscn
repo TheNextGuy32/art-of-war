@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://yrr85mbbtwta"]
+[gd_scene load_steps=9 format=3 uid="uid://yrr85mbbtwta"]
 
 [ext_resource type="Script" uid="uid://beyfq50emdo1d" path="res://scripts/plan_card_3d.gd" id="1"]
 [ext_resource type="BoxMesh" path="res://resources/card_box_mesh.tres" id="2"]
@@ -17,10 +17,16 @@ texture_filter = 0
 size = Vector2(2.4, 0.9)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_k4lnc"]
-size = Vector3(2.4, 0.6, 0.23)
+size = Vector3(2.4, 0.6, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_card"]
+size = Vector3(2.6, 0.2, 1.6)
 
 [node name="PlanCard3D" type="Node3D"]
 script = ExtResource("1")
+situation_index = null
+terrain = null
+owner_key = null
 
 [node name="CardMesh" type="MeshInstance3D" parent="."]
 material_override = ExtResource("3")
@@ -37,7 +43,7 @@ horizontal_alignment = 0
 vertical_alignment = 0
 
 [node name="UIQuad" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, -0.316554)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, 0)
 material_override = SubResource("StandardMaterial3D_yp3o7")
 mesh = SubResource("QuadMesh_l8432")
 
@@ -56,7 +62,22 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="UIArea" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, -0.316554)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="UIArea"]
 shape = SubResource("BoxShape3D_k4lnc")
+
+[node name="CardArea" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.02, 0)
+collision_layer = 2
+collision_mask = 2
+
+[node name="CardCollision" type="CollisionShape3D" parent="CardArea"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("BoxShape3D_card")
+
+[node name="OwnUnitsAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.06, 0.35)
+
+[node name="EnemyUnitsAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.06, -0.35)
