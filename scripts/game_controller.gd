@@ -1,9 +1,9 @@
 extends Node3D
 
 const MARCH_TYPES := [
-	{"name": "Camp", "visibility": 1.0},
-	{"name": "March Quietly", "visibility": 0.5},
-	{"name": "Kick Up Dust", "visibility": 2.0}
+	{"name": "🏕️ Normal 1x", "visibility": 1.0},
+	{"name": "📣 Noisy 2x", "visibility": 2.0},
+	{"name": "🤫 Quiet 0.5x", "visibility": 0.5},
 ]
 
 const TERRAIN_TYPES := ["open", "difficult", "no_escape", "city"]
@@ -20,9 +20,9 @@ const TERRAIN_COLORS := {
 	"city": Color(0.78, 0.86, 0.92)
 }
 
-@export var troop_divisor_max := 10
+@export var troop_divisor_max := 5
 @export var starting_troops := 100000
-@export var enemy_territory_bonus := 1000
+@export var enemy_territory_bonus := 5000
 
 var _players := []
 var _situations := []
@@ -35,9 +35,10 @@ var _pending_resolution_for := [false, false]
 var _pending_resolution_data := {"old": [0, 0], "new": [0, 0]}
 var _last_round_totals := [0, 0]
 var _last_round_plans := {"p1": [], "p2": []}
+var _siege_streaks := [0, 0]
+var _winner := -1
 
 var _cards: Array = []
-var _card_rows := {}
 var _card_index_by_key := {}
 var _enemy_units_by_card := []
 
@@ -49,6 +50,9 @@ var _drag_plane_y := 0.2
 var _hit_marker: MeshInstance3D = null
 var _hover_glow: MeshInstance3D = null
 var _hovered_card := -1
+var _hovered_march_card := -1
+var _hovered_march_side := 0
+var _hovered_controls_card := -1
 
 @onready var _cards_root: Node3D = $World/CardsRoot
 @onready var _unit_pool_root: Node3D = $World/UnitPool
@@ -61,27 +65,60 @@ var _hovered_card := -1
 @onready var _overlay: Control = $UI/TurnOverlay
 @onready var _accept_button: Button = $UI/TurnOverlay/AcceptTurnButton
 @onready var _resolution_overlay: Control = $UI/ResolutionOverlay
-@onready var _resolution_list: VBoxContainer = $UI/ResolutionOverlay/ResolutionPanel/ResolutionBox/ResolutionList
-@onready var _resolution_accept: Button = $UI/ResolutionOverlay/ResolutionPanel/ResolutionBox/ResolutionAcceptButton
+@onready var _resolution_summary: Label = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionSummary
+@onready var _resolution_you_total: Label = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionTotals/YouTotalLabel
+@onready var _resolution_they_total: Label = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionTotals/TheyTotalLabel
+@onready var _resolution_accept: Button = $UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionAcceptButton
+@onready var _victory_overlay: Control = $UI/VictoryOverlay
+@onready var _victory_label: Label = $UI/VictoryOverlay/VictoryLabel
 @onready var _sfx_player: AudioStreamPlayer = $Audio/SfxPlayer
 @onready var _music_player: AudioStreamPlayer = $Audio/MusicPlayer
+@onready var _red_land_label: Label3D = $Red/Label3D
+@onready var _blue_land_label: Label3D = $Blue/Label3D
+@onready var _neutral_land_label: Label3D = $Neutral/Label3D
+@onready var _open_terrain_label: Label3D = $"Open Terrain/Label3D"
+@onready var _difficult_terrain_label: Label3D = $"Difficult Terrain/Label3D"
+@onready var _no_escape_terrain_label: Label3D = $"No Escape Terrain/Label3D"
+@onready var _red_city_label: Label3D = $"Red City Label/Label3D"
+@onready var _blue_city_label: Label3D = $"Blue City Label/Label3D"
+
+@onready var _row_home_zone: Area3D = $World/HoverZones/RowHomeZone
+@onready var _row_neutral_zone: Area3D = $World/HoverZones/RowNeutralZone
+@onready var _row_enemy_zone: Area3D = $World/HoverZones/RowEnemyZone
+@onready var _col_open_zone: Area3D = $World/HoverZones/ColOpenZone
+@onready var _col_difficult_zone: Area3D = $World/HoverZones/ColDifficultZone
+@onready var _col_no_escape_zone: Area3D = $World/HoverZones/ColNoEscapeZone
+@onready var _col_city_zone: Area3D = $World/HoverZones/ColCityZone
 var _agent: Node = null
 
 var _unit_scene := preload("res://scenes/Unit.tscn")
 var _sfx_lift := preload("res://resources/Slurp.wav")
 var _sfx_place := preload("res://resources/Knock.wav")
 var _sfx_next_turn := preload("res://resources/NextTurn.wav")
+var _sfx_life_points := preload("res://resources/LifePoints.wav")
+var _sfx_victory := preload("res://resources/Victory.wav")
 var _sfx_click: AudioStream = null
 var _sfx_card_hover: AudioStream = null
 var _music_intro := preload("res://resources/Morgana Rides.mp3")
 const _SFX_CLICK_PATH := "res://resources/Click.wav"
 const _SFX_CARD_HOVER_PATH := "res://resources/CardHover.wav"
+const _CITY_LABEL_DEFEND := "┌ Defend Your Capital ┐\n"
+const _CITY_LABEL_ATTACK := "Win or Occupy \nEnemy Capital for\n ┌ 3 Turns to Win ┐\n"
+
+var _label_base_sizes: Dictionary = {}
+var _label_base_positions: Dictionary = {}
+var _hover_row_key := ""
+var _hover_col_key := ""
+var _hover_label_boost := 3
+var _hover_label_y := 0.02
+var _resolution_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("game_controller")
 	_gather_cards()
 	_init_game()
 	_build_unit_pool()
+	_cache_label_sizes()
 	_update_display()
 	_load_click_sfx()
 	_load_card_hover_sfx()
@@ -123,6 +160,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				if _try_cycle_march(event.position):
+					return
 				if _try_start_unit_drag(event.position):
 					return
 			else:
@@ -133,8 +172,51 @@ func _input(event: InputEvent) -> void:
 		if _dragging_unit != null:
 			_update_unit_drag(event.position)
 			return
+		_update_march_hover(event.position)
+		_update_controls_hover(event.position)
+		_update_row_col_hover(event.position)
 	if event is InputEventMouseButton or event is InputEventMouseMotion:
-		_forward_plan_ui_input(event)
+		_update_card_hover(event.position)
+
+func _try_cycle_march(mouse_pos: Vector2) -> bool:
+	var hit = _raycast(mouse_pos, 8)
+	if hit.is_empty():
+		return false
+	var collider = hit.get("collider", null)
+	if collider == null or not (collider is Area3D):
+		return false
+	var card = _find_card_for_node(collider)
+	if card == null or not card.has_meta("situation_index"):
+		return false
+	var idx: int = int(card.get_meta("situation_index"))
+	var plan = _get_plan(_current_player, idx)
+	if int(plan["divisions"]) <= 0:
+		return false
+	var dir := 0
+	if collider == card.get_march_left_area():
+		dir = -1
+	elif collider == card.get_march_right_area():
+		dir = 1
+	if dir == 0:
+		return false
+	var next = int(plan["march_type"]) + dir
+	if next < 0:
+		next = MARCH_TYPES.size() - 1
+	if next >= MARCH_TYPES.size():
+		next = 0
+	plan["march_type"] = next
+	_set_plan(_current_player, idx, plan)
+	_play_sfx(_sfx_click)
+	_update_display()
+	return true
+
+func _find_card_for_node(node: Node) -> Node:
+	var current: Node = node
+	while current != null:
+		if current.has_method("get_card_area"):
+			return current
+		current = current.get_parent()
+	return null
 
 func _try_start_unit_drag(mouse_pos: Vector2) -> bool:
 	var hit = _raycast(mouse_pos, 4)
@@ -152,7 +234,12 @@ func _try_start_unit_drag(mouse_pos: Vector2) -> bool:
 	_drag_plane_y = unit.global_position.y
 	_drag_offset = Vector3.ZERO
 	unit.lift_visual(unit.drag_lift)
+	if unit.has_method("set_dragging"):
+		unit.set_dragging(true)
 	_play_sfx(_sfx_lift)
+	_clear_controls_hover()
+	_clear_march_hover()
+	_update_display()
 	return true
 
 func _update_unit_drag(mouse_pos: Vector2) -> void:
@@ -173,6 +260,8 @@ func _end_unit_drag(mouse_pos: Vector2) -> void:
 	_dragging_unit = null
 	if unit != null:
 		unit.lift_visual(0.0)
+		if unit.has_method("set_dragging"):
+			unit.set_dragging(false)
 	_clear_card_hover()
 	var hit = _raycast(mouse_pos, 2)
 	if hit.is_empty():
@@ -200,6 +289,9 @@ func _end_unit_drag(mouse_pos: Vector2) -> void:
 func _update_card_hover(mouse_pos: Vector2) -> void:
 	if _hover_glow == null:
 		return
+	if _dragging_unit == null:
+		_clear_card_hover()
+		return
 	var hit = _raycast(mouse_pos, 2)
 	if hit.is_empty():
 		_clear_card_hover()
@@ -225,6 +317,142 @@ func _clear_card_hover() -> void:
 	_hovered_card = -1
 	_set_hover_glow_visible(false)
 
+func _update_march_hover(mouse_pos: Vector2) -> void:
+	var hit = _raycast(mouse_pos, 8)
+	if hit.is_empty():
+		_clear_march_hover()
+		return
+	var collider = hit.get("collider", null)
+	if collider == null or not (collider is Area3D):
+		_clear_march_hover()
+		return
+	var card = _find_card_for_node(collider)
+	if card == null or not card.has_meta("situation_index"):
+		_clear_march_hover()
+		return
+	var idx: int = int(card.get_meta("situation_index"))
+	var plan = _get_plan(_current_player, idx)
+	if int(plan["divisions"]) <= 0 or not card.visible:
+		_clear_march_hover()
+		return
+	var side := 0
+	if collider == card.get_march_left_area():
+		side = -1
+	elif collider == card.get_march_right_area():
+		side = 1
+	if side == 0:
+		_clear_march_hover()
+		return
+	if _hovered_march_card != idx or _hovered_march_side != side:
+		_clear_march_hover()
+		_hovered_march_card = idx
+		_hovered_march_side = side
+	card.set_arrow_hover(side == -1, side == 1)
+
+func _clear_march_hover() -> void:
+	if _hovered_march_card >= 0 and _hovered_march_card < _cards.size():
+		_cards[_hovered_march_card].set_arrow_hover(false, false)
+	_hovered_march_card = -1
+	_hovered_march_side = 0
+
+func _update_controls_hover(mouse_pos: Vector2) -> void:
+	if _dragging_unit != null:
+		_clear_controls_hover()
+		return
+	var hit = _raycast(mouse_pos, 2)
+	if hit.is_empty():
+		_clear_controls_hover()
+		return
+	var collider = hit.get("collider", null)
+	if collider == null or not (collider is Area3D):
+		_clear_controls_hover()
+		return
+	var card = _find_card_for_node(collider)
+	if card == null or not card.has_meta("situation_index"):
+		_clear_controls_hover()
+		return
+	var idx: int = int(card.get_meta("situation_index"))
+	var plan = _get_plan(_current_player, idx)
+	if int(plan["divisions"]) <= 0:
+		_clear_controls_hover()
+		return
+	if _hovered_controls_card != idx:
+		_clear_controls_hover()
+		_hovered_controls_card = idx
+		_update_display()
+
+func _clear_controls_hover() -> void:
+	if _hovered_controls_card == -1:
+		return
+	var prev = _hovered_controls_card
+	_hovered_controls_card = -1
+	if prev >= 0 and prev < _cards.size():
+		_cards[prev].set_arrows_visible(false)
+	_update_display()
+
+func _cache_label_sizes() -> void:
+	_label_base_sizes.clear()
+	_label_base_positions.clear()
+	var labels = [
+		_red_land_label,
+		_blue_land_label,
+		_neutral_land_label,
+		_open_terrain_label,
+		_difficult_terrain_label,
+		_no_escape_terrain_label,
+		_red_city_label,
+		_blue_city_label
+	]
+	for label in labels:
+		if label != null:
+			_label_base_sizes[label] = label.font_size
+			_label_base_positions[label] = label.position
+
+func _set_label_hover(label: Label3D, hover: bool) -> void:
+	if label == null or not _label_base_sizes.has(label):
+		return
+	var base: int = int(_label_base_sizes[label])
+	label.font_size = base + (_hover_label_boost if hover else 0)
+	if _label_base_positions.has(label):
+		var base_pos: Vector3 = _label_base_positions[label]
+		label.position = base_pos + (Vector3(0, _hover_label_y, 0) if hover else Vector3.ZERO)
+
+func _update_row_col_hover(mouse_pos: Vector2) -> void:
+	var row_key := ""
+	var col_key := ""
+	var row_hit = _raycast(mouse_pos, 16)
+	if not row_hit.is_empty():
+		var row_collider = row_hit.get("collider", null)
+		if row_collider == _row_home_zone:
+			row_key = "home"
+		elif row_collider == _row_neutral_zone:
+			row_key = "neutral"
+		elif row_collider == _row_enemy_zone:
+			row_key = "enemy"
+	var col_hit = _raycast(mouse_pos, 32)
+	if not col_hit.is_empty():
+		var col_collider = col_hit.get("collider", null)
+		if col_collider == _col_open_zone:
+			col_key = "open"
+		elif col_collider == _col_difficult_zone:
+			col_key = "difficult"
+		elif col_collider == _col_no_escape_zone:
+			col_key = "no_escape"
+		elif col_collider == _col_city_zone:
+			col_key = "city"
+	if row_key == _hover_row_key and col_key == _hover_col_key:
+		return
+	_hover_row_key = row_key
+	_hover_col_key = col_key
+	_set_label_hover(_blue_land_label, row_key == ("home" if _current_player == 0 else "enemy"))
+	_set_label_hover(_red_land_label, row_key == ("enemy" if _current_player == 0 else "home"))
+	_set_label_hover(_neutral_land_label, row_key == "neutral")
+	_set_label_hover(_open_terrain_label, col_key == "open")
+	_set_label_hover(_difficult_terrain_label, col_key == "difficult")
+	_set_label_hover(_no_escape_terrain_label, col_key == "no_escape")
+	_set_label_hover(_blue_city_label, col_key == "city")
+	_set_label_hover(_red_city_label, col_key == "city")
+
 func _ray_plane_intersect(ray_origin: Vector3, ray_dir: Vector3, plane_y: float) -> Variant:
 	var denom = ray_dir.y
 	if abs(denom) < 0.0001:
@@ -243,48 +471,6 @@ func _raycast(mouse_pos: Vector2, mask: int) -> Dictionary:
 	params.collide_with_bodies = false
 	params.collision_mask = mask
 	return space.intersect_ray(params)
-
-func _forward_plan_ui_input(event: InputEvent) -> void:
-	var viewport := get_viewport()
-	if viewport == null:
-		return
-	var mouse_pos: Vector2
-	if event is InputEventMouseButton:
-		mouse_pos = event.position
-	elif event is InputEventMouseMotion:
-		mouse_pos = event.position
-	else:
-		return
-	var hit = _raycast(mouse_pos, 1)
-	if hit.is_empty():
-		return
-	var collider = hit.get("collider", null)
-	if collider == null:
-		return
-	var card: Node = collider.get_parent()
-	if card == null or not card.has_method("get_ui_viewport"):
-		return
-	var ui_viewport: SubViewport = card.get_ui_viewport()
-	var ui_area: Area3D = card.get_ui_area()
-	if ui_area == null or ui_viewport == null:
-		return
-	if collider != ui_area:
-		return
-	var ui_quad: Node3D = card.get_node_or_null("UIQuad")
-	if ui_quad == null:
-		return
-	var ui_local = card.ui_quad_local_from_ray(_camera.project_ray_origin(mouse_pos), _camera.project_ray_normal(mouse_pos))
-	var ui_pos = card.ui_quad_to_viewport(ui_local)
-	var forwarded = event.duplicate()
-	if forwarded is InputEventMouseButton:
-		forwarded.position = ui_pos
-		forwarded.global_position = ui_pos
-	elif forwarded is InputEventMouseMotion:
-		forwarded.position = ui_pos
-		forwarded.global_position = ui_pos
-	ui_viewport.push_input(forwarded)
-	var marker_pos = ui_quad.to_global(Vector3(ui_local.x, 0.0, ui_local.z))
-	_show_hit_marker(marker_pos, ui_quad.global_basis)
 
 func _show_hit_marker(world_pos: Vector3, basis: Basis) -> void:
 	if _hit_marker == null:
@@ -356,15 +542,16 @@ func _init_game() -> void:
 	_last_resolution_lines.clear()
 	_last_round_totals = [_players[0]["total_troops"], _players[1]["total_troops"]]
 	_last_round_plans = {"p1": [], "p2": []}
+	_siege_streaks = [0, 0]
+	_winner = -1
 	_init_situations_from_cards()
 
 func _gather_cards() -> void:
 	_cards.clear()
 	_enemy_units_by_card.clear()
-	_card_rows.clear()
 	var found: Array = []
 	for child in _cards_root.get_children():
-		if child != null and child.has_method("get_ui_root"):
+		if child != null and child.has_method("get_card_area"):
 			found.append(child)
 	found.sort_custom(func(a, b): return int(a.situation_index) < int(b.situation_index))
 	for card in found:
@@ -376,7 +563,6 @@ func _gather_cards() -> void:
 			card_area.collision_layer = 2
 			card_area.collision_mask = 2
 			card_area.input_ray_pickable = true
-		_build_card_ui(idx, card)
 		_build_enemy_units(idx, card)
 
 func _init_situations_from_cards() -> void:
@@ -398,39 +584,6 @@ func _init_situations_from_cards() -> void:
 			"p2": {"divisions": 0, "march_type": 0}
 		}
 		_card_index_by_key[_situation_key(terrain, owner)] = idx
-
-func _build_card_ui(index: int, card: Node) -> void:
-	if not card.has_method("get_ui_root"):
-		return
-	var ui_root: Control = card.get_ui_root()
-	for child in ui_root.get_children():
-		child.queue_free()
-	var row := HBoxContainer.new()
-	row.name = "MarchRow_%d" % index
-	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	row.custom_minimum_size = Vector2(520, 96)
-	row.z_index = 20
-	row.z_as_relative = false
-	row.scale = Vector2(2.0, 2.0)
-	row.add_theme_constant_override("separation", 10)
-	var label := Label.new()
-	label.text = "March"
-	label.add_theme_font_size_override("font_size", 24)
-	row.add_child(label)
-	var march_select := OptionButton.new()
-	for m in MARCH_TYPES:
-		march_select.add_item(m["name"])
-	march_select.custom_minimum_size = Vector2(300, 48)
-	march_select.add_theme_font_size_override("font_size", 24)
-	march_select.item_selected.connect(_on_march_selected.bind(index))
-	march_select.pressed.connect(_on_ui_click_sfx)
-	row.add_child(march_select)
-	ui_root.add_child(row)
-	_card_rows[index] = {
-		"march": march_select,
-		"row": row,
-		"card": card
-	}
 
 func _build_enemy_units(index: int, card: Node) -> void:
 	var units := []
@@ -460,6 +613,12 @@ func _build_unit_pool() -> void:
 				owner = 0
 			_units_by_player[owner].append(child)
 	for player_idx in range(2):
+		if _units_by_player[player_idx].size() > troop_divisor_max:
+			var extras = _units_by_player[player_idx].slice(troop_divisor_max)
+			for unit in extras:
+				if unit != null:
+					unit.queue_free()
+			_units_by_player[player_idx] = _units_by_player[player_idx].slice(0, troop_divisor_max)
 		while _units_by_player[player_idx].size() < troop_divisor_max:
 			var unit = _unit_scene.instantiate()
 			unit.name = "Unit_%d_%d" % [player_idx, _units_by_player[player_idx].size()]
@@ -478,8 +637,11 @@ func _build_unit_pool() -> void:
 	_sync_divisions_from_units(1)
 
 func _update_display() -> void:
-	_turn_label.text = "Player %d Turn" % (_current_player + 1)
+	var player_name = "Blue Player" if _current_player == 0 else "Red Player"
+	_turn_label.text = "%s Turn" % player_name
 	_turn_label.add_theme_color_override("font_color", _player_color(_current_player))
+	_update_land_labels()
+	_update_city_labels()
 	var total_troops: int = _players[_current_player]["total_troops"]
 	_troops_label.text = "Total Troops: %d" % total_troops
 	var enemy_idx = 1 - _current_player
@@ -487,17 +649,51 @@ func _update_display() -> void:
 	_loss_label.text = "Losses Last Turn: %d" % _players[_current_player]["last_losses"]
 	for i in range(_situations.size()):
 		_update_card(i)
-		var row = _card_rows.get(i, null)
-		if row != null:
-			row["row"].visible = not _awaiting_accept and not _awaiting_resolution
-			row["march"].select(_get_plan(_current_player, i)["march_type"])
 	_update_unit_visibility()
 	_update_unit_positions()
 	_update_enemy_units()
 	_overlay.visible = _awaiting_accept
-	_resolution_overlay.visible = _awaiting_resolution
+	var show_victory = _winner >= 0
+	_resolution_overlay.visible = _awaiting_resolution and not show_victory
+	_victory_overlay.visible = show_victory
+	if show_victory and _victory_label != null:
+		_victory_label.text = "BLUE VICTORY" if _winner == 0 else "RED VICTORY"
+		_victory_label.add_theme_color_override("font_color", _player_color(_winner))
+		_play_victory()
 	_update_agent_state()
 	_update_resolution_overlay()
+
+func _play_victory() -> void:
+	if _music_player != null and _music_player.playing:
+		_music_player.stop()
+	_play_sfx(_sfx_victory)
+
+func _update_land_labels() -> void:
+	if _red_land_label == null or _blue_land_label == null or _neutral_land_label == null:
+		return
+	var blue_home = _current_player == 0
+	var enemy_bonus_text = "+%dk per controlled\n" % int(enemy_territory_bonus / 1000)
+	var blue_text = ("┌ Homelands ┐\n" if blue_home else "┌ Enemy Lands ┐\n") + (enemy_bonus_text if not blue_home else "")
+	var red_text = ("┌ Enemy Lands ┐\n" if blue_home else "┌ Homelands ┐\n") + (enemy_bonus_text if blue_home else "")
+	_blue_land_label.text = blue_text
+	_red_land_label.text = red_text
+	_neutral_land_label.text = "┌ Neutral Lands ┐\n"
+
+func _update_city_labels() -> void:
+	if _red_city_label == null or _blue_city_label == null:
+		return
+	var blue_home = _current_player == 0
+	var enemy_idx = 1 - _current_player
+	var turns_to_win = max(0, 3 - _siege_streaks[_current_player])
+	var turns_to_lose = max(0, 3 - _siege_streaks[enemy_idx])
+	var defend_text = "┌ Defend Your Capital ┐\n%d Turns Until Loss\n" % turns_to_lose
+	var attack_text = "Win or Occupy \nEnemy Capital for\n ┌ %d Turns to Win ┐\n" % turns_to_win
+	if blue_home:
+		_blue_city_label.text = defend_text
+		_red_city_label.text = attack_text
+	else:
+		_blue_city_label.text = attack_text
+		_red_city_label.text = defend_text
 
 func _update_card(index: int) -> void:
 	var situation = _situations[index]
@@ -512,11 +708,6 @@ func _update_card(index: int) -> void:
 	var troopsShorthand := str(int(troops)/1000) + "K"
 	var march_name = MARCH_TYPES[plan["march_type"]]["name"]
 	var text := ""
-	if (perspective != "Neutral"):
-		text += "%s " % [
-			str(perspective)
-		]
-	text += terrain_label + "\n"
 	if (int(troops) > 0):
 		text += "%s " % [
 			troopsShorthand,
@@ -529,6 +720,11 @@ func _update_card(index: int) -> void:
 		]
 		
 	_cards[index].set_text(text)
+	_cards[index].set_march_label(march_name)
+	var show_controls = divisions > 0 and not _awaiting_accept and not _awaiting_resolution
+	_cards[index].set_march_controls_visible(show_controls)
+	var show_arrows = show_controls and _hovered_controls_card == index and _dragging_unit == null
+	_cards[index].set_arrows_visible(show_arrows)
 
 func _update_unit_visibility() -> void:
 	for player_idx in range(2):
@@ -581,6 +777,9 @@ func _update_enemy_units() -> void:
 	var enemy_idx = 1 - _current_player
 	for i in range(_situations.size()):
 		var units: Array = _enemy_units_by_card[i]
+		for unit in units:
+			if unit != null:
+				unit.set_unit_owner(enemy_idx, _player_color(enemy_idx))
 		var count = _apparent_enemy_divisions(enemy_idx, i)
 		count = clamp(count, 0, troop_divisor_max)
 		for j in range(units.size()):
@@ -629,15 +828,6 @@ func _home_city_index(player_idx: int) -> int:
 func _situation_key(terrain: String, owner: String) -> String:
 	return "%s|%s" % [terrain, owner]
 
-func _on_march_selected(selection: int, index: int) -> void:
-	if _awaiting_accept:
-		return
-	_play_sfx(_sfx_click)
-	var plan = _get_plan(_current_player, index)
-	plan["march_type"] = selection
-	_set_plan(_current_player, index, plan)
-	_update_display()
-
 func _get_plan(player_idx: int, situation_idx: int) -> Dictionary:
 	var situation = _situations[situation_idx]
 	if player_idx == 0:
@@ -685,6 +875,31 @@ func _enemy_territory_bonus(player_idx: int) -> int:
 		if plan["divisions"] > 0:
 			bonus += enemy_territory_bonus
 	return bonus
+
+func _update_siege_streaks() -> void:
+	var city_p1 = _card_index_by_key.get(_situation_key("city", "p1"), -1)
+	var city_p2 = _card_index_by_key.get(_situation_key("city", "p2"), -1)
+	_siege_streaks[0] = _next_siege_streak(0, city_p2)
+	_siege_streaks[1] = _next_siege_streak(1, city_p1)
+	for player_idx in range(2):
+		if _siege_streaks[player_idx] >= 3:
+			_winner = player_idx
+
+func _next_siege_streak(player_idx: int, city_index: int) -> int:
+	if city_index < 0 or city_index >= _situations.size():
+		return 0
+	var attacker_plan = _get_plan(player_idx, city_index)
+	var defender_idx = 1 - player_idx
+	var defender_plan = _get_plan(defender_idx, city_index)
+	if int(attacker_plan["divisions"]) <= 0:
+		return 0
+	if int(defender_plan["divisions"]) <= 0:
+		return _siege_streaks[player_idx] + 1
+	var attacker_troops = _divisions_to_troops(player_idx, attacker_plan["divisions"])
+	var defender_troops = _divisions_to_troops(defender_idx, defender_plan["divisions"])
+	if attacker_troops > defender_troops:
+		return _siege_streaks[player_idx] + 1
+	return 0
 
 func _compute_losses(p1_troops: int, p2_troops: int, terrain: String, owner: String) -> Array:
 	if p1_troops <= 0 and p2_troops <= 0:
@@ -806,6 +1021,7 @@ func _resolve_turn() -> void:
 		"p1": _snapshot_plans(0),
 		"p2": _snapshot_plans(1)
 	}
+	_update_siege_streaks()
 	for i in range(_situations.size()):
 		var situation = _situations[i]
 		var p1 = _get_plan(0, i)
@@ -840,14 +1056,16 @@ func _resolve_turn() -> void:
 				])
 	var old_totals := [_players[0]["total_troops"], _players[1]["total_troops"]]
 	var new_totals := [0, 0]
+	var bonus_totals := [0, 0]
 	for player_idx in range(2):
 		var bonus = _enemy_territory_bonus(player_idx)
+		bonus_totals[player_idx] = bonus
 		new_totals[player_idx] = max(0, _players[player_idx]["total_troops"] - losses[player_idx] + bonus)
 		_players[player_idx]["total_troops"] = new_totals[player_idx]
 		_players[player_idx]["last_losses"] = losses[player_idx]
 	_pending_resolution = true
 	_pending_resolution_for = [true, true]
-	_pending_resolution_data = {"old": old_totals, "new": new_totals}
+	_pending_resolution_data = {"old": old_totals, "new": new_totals, "bonus": bonus_totals}
 
 func _divisions_to_troops(player_idx: int, divisions: int) -> int:
 	if troop_divisor_max <= 0:
@@ -969,24 +1187,76 @@ func handle_agent_command(name: String, msg: Dictionary) -> Dictionary:
 	return {}
 
 func _update_resolution_overlay() -> void:
-	if _resolution_list == null:
+	if _resolution_summary == null or _resolution_you_total == null or _resolution_they_total == null:
 		return
-	for child in _resolution_list.get_children():
-		child.queue_free()
 	if not _pending_resolution:
 		return
-	var old_totals: Array = _pending_resolution_data.get("old", [0, 0])
-	var new_totals: Array = _pending_resolution_data.get("new", [0, 0])
-	var lines = [
-		"Round Results",
-		"Player 1: %d -> %d" % [old_totals[0], new_totals[0]],
-		"Player 2: %d -> %d" % [old_totals[1], new_totals[1]]
+	var bonus_totals: Array = _pending_resolution_data.get("bonus", [0, 0])
+	var you_idx = _current_player
+	var they_idx = 1 - _current_player
+	var you_lost = _players[you_idx]["last_losses"]
+	var they_lost = _players[they_idx]["last_losses"]
+	_resolution_summary.text = "You killed %d of their troops and lost %d. You stole %d troops." % [
+		they_lost,
+		you_lost,
+		bonus_totals[you_idx]
 	]
-	for line in lines:
-		var label := Label.new()
-		label.add_theme_font_size_override("font_size", 24)
-		label.text = str(line)
-		_resolution_list.add_child(label)
+	_resolution_you_total.add_theme_color_override("font_color", _player_color(you_idx))
+	_resolution_they_total.add_theme_color_override("font_color", _player_color(they_idx))
 
 func _begin_resolution_for_current() -> void:
 	_awaiting_resolution = true
+	if _winner < 0:
+		_start_resolution_animation()
+
+func _start_resolution_animation() -> void:
+	if _resolution_accept == null or _resolution_you_total == null or _resolution_they_total == null:
+		return
+	if _resolution_tween != null:
+		_resolution_tween.kill()
+	var old_totals: Array = _pending_resolution_data.get("old", [0, 0])
+	var new_totals: Array = _pending_resolution_data.get("new", [0, 0])
+	var you_idx = _current_player
+	var they_idx = 1 - _current_player
+	var no_change = int(old_totals[0]) == int(new_totals[0]) and int(old_totals[1]) == int(new_totals[1])
+	_set_total_label(_resolution_you_total, "You", int(old_totals[you_idx]))
+	_set_total_label(_resolution_they_total, "They", int(old_totals[they_idx]))
+	if no_change:
+		_resolution_accept.visible = true
+		_resolution_accept.disabled = false
+		return
+	_resolution_accept.visible = false
+	_resolution_accept.disabled = true
+	_set_total_label(_resolution_you_total, "You", int(old_totals[you_idx]))
+	_set_total_label(_resolution_they_total, "They", int(old_totals[they_idx]))
+	_resolution_tween = create_tween()
+	var duration := 1.5
+	_resolution_tween.tween_interval(0.5)
+	_resolution_tween.tween_callback(Callable(self, "_play_sfx").bind(_sfx_life_points))
+	_resolution_tween.tween_method(
+		Callable(self, "_tween_total_label").bind(_resolution_you_total, "You"),
+		float(old_totals[you_idx]),
+		float(new_totals[you_idx]),
+		duration
+	)
+	_resolution_tween.parallel().tween_method(
+		Callable(self, "_tween_total_label").bind(_resolution_they_total, "Them"),
+		float(old_totals[they_idx]),
+		float(new_totals[they_idx]),
+		duration
+	)
+	_resolution_tween.finished.connect(_on_resolution_animation_finished)
+
+func _tween_total_label(value: float, label: Label, prefix: String) -> void:
+	_set_total_label(label, prefix, int(round(value)))
+
+func _set_total_label(label: Label, prefix: String, value: int) -> void:
+	if label == null:
+		return
+	label.text = "%s: %d" % [prefix, value]
+
+func _on_resolution_animation_finished() -> void:
+	if _resolution_accept == null:
+		return
+	_resolution_accept.visible = true
+	_resolution_accept.disabled = false

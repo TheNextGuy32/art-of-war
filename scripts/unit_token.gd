@@ -4,23 +4,27 @@ extends Node3D
 @export var hover_lift := 0.22
 @export var drag_lift := 0.12
 @export var token_scale := Vector3(0.16, 0.16, 0.16)
+@export var drag_scale_multiplier := 1.5
 @export var hover_tint := Color(1.0, 1.0, 1.0)
 @export var owner_id := 0
 @export var assigned_situation := -1
 
 var draggable := true
+var is_dragging := false
 
 signal lifted(unit: Node3D)
 
 @onready var _visual: Node3D = $unit
 @onready var _area: Area3D = $HitArea
 @onready var _base_visual_pos: Vector3 = Vector3.ZERO
+@onready var _base_visual_scale: Vector3 = Vector3.ONE
 @onready var _mesh_instances: Array[MeshInstance3D] = []
 
 func _ready() -> void:
 	add_to_group("unit_token")
 	if _visual != null:
 		_base_visual_pos = _visual.position
+		_base_visual_scale = token_scale
 		_visual.scale = token_scale
 	_collect_meshes()
 	if _area != null:
@@ -75,6 +79,15 @@ func lift_visual(amount: float) -> void:
 	if _visual == null:
 		return
 	_visual.position = _base_visual_pos + Vector3(0, amount, 0)
+
+func set_dragging(value: bool) -> void:
+	is_dragging = value
+	if _visual == null:
+		return
+	if is_dragging:
+		_visual.scale = _base_visual_scale * drag_scale_multiplier
+	else:
+		_visual.scale = _base_visual_scale
 
 func _on_mouse_entered() -> void:
 	if not draggable:

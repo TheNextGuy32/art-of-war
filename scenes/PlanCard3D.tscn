@@ -1,71 +1,33 @@
-[gd_scene load_steps=9 format=3 uid="uid://yrr85mbbtwta"]
+[gd_scene load_steps=7 format=3 uid="uid://yrr85mbbtwta"]
 
 [ext_resource type="Script" uid="uid://beyfq50emdo1d" path="res://scripts/plan_card_3d.gd" id="1"]
 [ext_resource type="BoxMesh" path="res://resources/card_box_mesh.tres" id="2"]
 [ext_resource type="Material" path="res://resources/card_plan_material.tres" id="3"]
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_sagwv"]
-viewport_path = NodePath("UIViewport")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yp3o7"]
-transparency = 1
-shading_mode = 0
-albedo_texture = SubResource("ViewportTexture_sagwv")
-texture_filter = 0
-
-[sub_resource type="QuadMesh" id="QuadMesh_l8432"]
-size = Vector2(2.4, 0.9)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_k4lnc"]
-size = Vector3(2.4, 0.6, 0.9)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_card"]
 size = Vector3(2.6, 0.2, 1.6)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_left"]
+size = Vector3(0.4, 0.15, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_right"]
+size = Vector3(0.4, 0.15, 0.4)
+
 [node name="PlanCard3D" type="Node3D"]
 script = ExtResource("1")
-situation_index = null
-terrain = null
-owner_key = null
 
 [node name="CardMesh" type="MeshInstance3D" parent="."]
 material_override = ExtResource("3")
 mesh = ExtResource("2")
 
 [node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -1.248, 0.042, 0.0300055)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -0.0552983, 0.042, 0.717304)
 pixel_size = 0.01
 text = "Troops: 0
 Enemy: Unknown"
 font_size = 24
 outline_size = 3
-horizontal_alignment = 0
-vertical_alignment = 0
-
-[node name="UIQuad" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, 0)
-material_override = SubResource("StandardMaterial3D_yp3o7")
-mesh = SubResource("QuadMesh_l8432")
-
-[node name="UIViewport" type="SubViewport" parent="."]
-disable_3d = true
-transparent_bg = true
-size = Vector2i(1280, 420)
-render_target_update_mode = 4
-
-[node name="UIRoot" type="Control" parent="UIViewport"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="UIArea" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.042, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="UIArea"]
-shape = SubResource("BoxShape3D_k4lnc")
+vertical_alignment = 2
 
 [node name="CardArea" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.02, 0)
@@ -81,3 +43,40 @@ transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.0
 
 [node name="EnemyUnitsAnchor" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.06, -0.35)
+
+[node name="MarchControls" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.108133, -0.35)
+
+[node name="LeftArrow" type="Area3D" parent="MarchControls"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -1.06064, 0, 0)
+collision_layer = 8
+collision_mask = 8
+
+[node name="LeftLabel" type="Label3D" parent="MarchControls/LeftArrow"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.02, 0)
+text = "<"
+font_size = 100
+outline_size = 2
+
+[node name="LeftCollision" type="CollisionShape3D" parent="MarchControls/LeftArrow"]
+shape = SubResource("BoxShape3D_left")
+
+[node name="MarchLabel" type="Label3D" parent="MarchControls"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, -0.00605494, -0.00389433, 0.0677443)
+text = "Camp"
+font_size = 50
+outline_size = 2
+
+[node name="RightArrow" type="Area3D" parent="MarchControls"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 1.04705, 0.00302148, 0)
+collision_layer = 8
+collision_mask = 8
+
+[node name="RightLabel" type="Label3D" parent="MarchControls/RightArrow"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.02, 0)
+text = ">"
+font_size = 100
+outline_size = 2
+
+[node name="RightCollision" type="CollisionShape3D" parent="MarchControls/RightArrow"]
+shape = SubResource("BoxShape3D_right")

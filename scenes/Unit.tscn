@@ -45,6 +45,7 @@ size = Vector3(0.33, 1.36, 0.28)
 script = ExtResource("2_q1hi7")
 hover_lift = 0.12
 drag_lift = null
+drag_scale_multiplier = null
 
 [node name="unit" parent="." instance=ExtResource("1_h85lg")]
 transform = Transform3D(-6.99382e-09, 0, 0.16, 0, 0.16, 0, -0.16, 0, -6.99382e-09, -0.0159718, -0.00741172, 0.0151894)

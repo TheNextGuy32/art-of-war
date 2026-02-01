@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://bdfdsw2iykl7y"]
+[gd_scene load_steps=20 format=3 uid="uid://bdfdsw2iykl7y"]
 
 [ext_resource type="Script" uid="uid://dhxeqcdxkuw72" path="res://scripts/game_controller.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://yrr85mbbtwta" path="res://scenes/PlanCard3D.tscn" id="2_card"]
@@ -7,6 +7,12 @@
 [ext_resource type="PackedScene" uid="uid://cum7g144133e2" path="res://scenes/RedCity.tscn" id="4_rarhs"]
 [ext_resource type="PackedScene" uid="uid://b21m0jy8mkfll" path="res://scenes/BlueCity.tscn" id="5_vcsgt"]
 [ext_resource type="PackedScene" uid="uid://kowr2eagr4nd" path="res://scenes/tree.tscn" id="7_nxtc6"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_row"]
+size = Vector3(12, 0.5, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_col"]
+size = Vector3(2.8, 0.5, 9)
 
 [sub_resource type="Environment" id="Environment_rvslj"]
 ambient_light_color = Color(1, 1, 1, 1)
@@ -54,7 +60,7 @@ transform = Transform3D(1, 0, 0, 0, 0.365543, 0.930794, 0, -0.930794, 0.365543, 
 fov = 70.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
-transform = Transform3D(0.824912, -0.319498, 0.466305, 0.000929887, 0.825704, 0.564103, -0.56526, -0.464902, 0.68143, 0, 0, 0)
+transform = Transform3D(0.284194, -0.856635, 0.430592, 0.000784209, 0.449318, 0.893371, -0.958766, -0.253553, 0.128365, 0, 0, 0)
 light_energy = 1.6
 shadow_enabled = true
 shadow_opacity = 0.7
@@ -65,8 +71,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.135561, 0)
 [node name="Card_Home_Open" parent="World/CardsRoot" instance=ExtResource("2_card")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, 2.8)
 card_color = Color(0.94, 0.9, 0.78, 1)
-situation_index = 0
-terrain = "open"
 owner_key = "p1"
 
 [node name="Card_Home_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
@@ -94,28 +98,23 @@ owner_key = "p1"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, 0)
 card_color = Color(0.94, 0.9, 0.78, 1)
 situation_index = 4
-terrain = "open"
-owner_key = "neutral"
 
 [node name="Card_Neutral_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.14, 0)
 card_color = Color(0.85, 0.85, 0.85, 1)
 situation_index = 5
 terrain = "difficult"
-owner_key = "neutral"
 
 [node name="Card_Neutral_NoEscape" parent="World/CardsRoot" instance=ExtResource("2_card")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.14, 0)
 card_color = Color(0.82, 0.78, 0.76, 1)
 situation_index = 6
 terrain = "no_escape"
-owner_key = "neutral"
 
 [node name="Card_Enemy_Open" parent="World/CardsRoot" instance=ExtResource("2_card")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.14, -2.8)
 card_color = Color(0.94, 0.9, 0.78, 1)
 situation_index = 7
-terrain = "open"
 owner_key = "p2"
 
 [node name="Card_Enemy_Difficult" parent="World/CardsRoot" instance=ExtResource("2_card")]
@@ -139,117 +138,175 @@ situation_index = 10
 terrain = "city"
 owner_key = "p2"
 
+[node name="HoverZones" type="Node3D" parent="World"]
+
+[node name="RowHomeZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 2.8)
+collision_layer = 16
+collision_mask = 16
+
+[node name="RowHomeShape" type="CollisionShape3D" parent="World/HoverZones/RowHomeZone"]
+shape = SubResource("BoxShape3D_row")
+
+[node name="RowNeutralZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+collision_layer = 16
+collision_mask = 16
+
+[node name="RowNeutralShape" type="CollisionShape3D" parent="World/HoverZones/RowNeutralZone"]
+shape = SubResource("BoxShape3D_row")
+
+[node name="RowEnemyZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -2.8)
+collision_layer = 16
+collision_mask = 16
+
+[node name="RowEnemyShape" type="CollisionShape3D" parent="World/HoverZones/RowEnemyZone"]
+shape = SubResource("BoxShape3D_row")
+
+[node name="ColOpenZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0.2, 0)
+collision_layer = 32
+collision_mask = 32
+
+[node name="ColOpenShape" type="CollisionShape3D" parent="World/HoverZones/ColOpenZone"]
+shape = SubResource("BoxShape3D_col")
+
+[node name="ColDifficultZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.2, 0)
+collision_layer = 32
+collision_mask = 32
+
+[node name="ColDifficultShape" type="CollisionShape3D" parent="World/HoverZones/ColDifficultZone"]
+shape = SubResource("BoxShape3D_col")
+
+[node name="ColNoEscapeZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.2, 0)
+collision_layer = 32
+collision_mask = 32
+
+[node name="ColNoEscapeShape" type="CollisionShape3D" parent="World/HoverZones/ColNoEscapeZone"]
+shape = SubResource("BoxShape3D_col")
+
+[node name="ColCityZone" type="Area3D" parent="World/HoverZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 0.2, 0)
+collision_layer = 32
+collision_mask = 32
+
+[node name="ColCityShape" type="CollisionShape3D" parent="World/HoverZones/ColCityZone"]
+shape = SubResource("BoxShape3D_col")
+
 [node name="UnitPool" type="Node3D" parent="World"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.229589, 0)
 
 [node name="Unit_P1_01" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0381309, 0, -0.999273, 0, 1, 0, 0.999273, 0, -0.0381309, -7, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_02" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0404451, 0, -0.999182, 0, 1, 0, 0.999182, 0, -0.0404451, -6.6, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_03" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0430581, 0, -0.999072, 0, 1, 0, 0.999072, 0, -0.0430581, -6.2, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_04" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0460318, 0, -0.99894, 0, 1, 0, 0.99894, 0, -0.0460318, -5.8, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_05" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0494461, 0, -0.998777, 0, 1, 0, 0.998777, 0, -0.0494461, -5.4, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_06" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0950324, 0, -0.995474, 0, 1, 0, 0.995474, 0, -0.0950324, -7, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_07" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.100752, 0, -0.994912, 0, 1, 0, 0.994912, 0, -0.100752, -6.6, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_08" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.107201, 0, -0.994237, 0, 1, 0, 0.994237, 0, -0.107201, -6.2, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_09" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.114525, 0, -0.99342, 0, 1, 0, 0.99342, 0, -0.114525, -5.8, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P1_10" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.122916, 0, -0.992417, 0, 1, 0, 0.992417, 0, -0.122916, -5.4, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 
 [node name="Unit_P2_01" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0379148, 0, 0.999281, 0, 1, 0, -0.999281, 0, -0.0379148, 7, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_02" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0402022, 0, 0.999192, 0, 1, 0, -0.999192, 0, -0.0402022, 6.6, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_03" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0427829, 0, 0.999084, 0, 1, 0, -0.999084, 0, -0.0427829, 6.2, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_04" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0457174, 0, 0.998954, 0, 1, 0, -0.998954, 0, -0.0457174, 5.8, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_05" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 3)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.0490836, 0, 0.998795, 0, 1, 0, -0.998795, 0, -0.0490836, 5.4, 0, 3)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_06" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.094498, 0, 0.995525, 0, 1, 0, -0.995525, 0, -0.094498, 7, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_07" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.100152, 0, 0.994972, 0, 1, 0, -0.994972, 0, -0.100152, 6.6, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_08" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.106522, 0, 0.99431, 0, 1, 0, -0.99431, 0, -0.106522, 6.2, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_09" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.113752, 0, 0.993509, 0, 1, 0, -0.993509, 0, -0.113752, 5.8, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="Unit_P2_10" parent="World/UnitPool" instance=ExtResource("3_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 2.6)
-hover_lift = 0.12
-drag_lift = null
+transform = Transform3D(-0.122026, 0, 0.992527, 0, 1, 0, -0.992527, 0, -0.122026, 5.4, 0, 2.6)
+drag_lift = 0.12
+drag_scale_multiplier = 1.5
 owner_id = 1
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="World"]
@@ -295,7 +352,7 @@ anchor_bottom = 0.4
 layout_mode = 2
 theme = ExtResource("4_c01mt")
 theme_override_font_sizes/font_size = 38
-text = "Player 1 Turn"
+text = "Blue Player Turn"
 
 [node name="TroopsLabel" type="Label" parent="UI/HUD/HUDBox"]
 layout_mode = 2
@@ -347,7 +404,6 @@ theme_override_font_sizes/font_size = 48
 text = "Accept Turn"
 
 [node name="ResolutionOverlay" type="Control" parent="UI"]
-visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -357,9 +413,12 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="ResolutionRect" type="ColorRect" parent="UI/ResolutionOverlay"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 0.9)
 
 [node name="ResolutionPanel" type="PanelContainer" parent="UI/ResolutionOverlay"]
@@ -370,26 +429,79 @@ anchor_top = 0.15
 anchor_right = 0.8
 anchor_bottom = 0.85
 
-[node name="ResolutionBox" type="VBoxContainer" parent="UI/ResolutionOverlay/ResolutionPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/ResolutionOverlay/ResolutionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="ResolutionBox" type="VBoxContainer" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="ResolutionTitle" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
+[node name="ResolutionTitle" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 51
 text = "Battle Resolution"
 
-[node name="ResolutionList" type="VBoxContainer" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
+[node name="ResolutionSummary" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "You killed 0 of their troops and lost 0. You stole 0 troops."
+
+[node name="ResolutionTotals" type="HBoxContainer" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
+theme_override_constants/separation = 40
 
-[node name="ResolutionAcceptButton" type="Button" parent="UI/ResolutionOverlay/ResolutionPanel/ResolutionBox"]
+[node name="YouTotalLabel" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionTotals"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 36
+text = "You: 100000"
+
+[node name="TheyTotalLabel" type="Label" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox/ResolutionTotals"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 36
+text = "Them: 100000"
+
+[node name="ResolutionAcceptButton" type="Button" parent="UI/ResolutionOverlay/ResolutionPanel/MarginContainer/ResolutionBox"]
 layout_mode = 2
 theme = ExtResource("4_c01mt")
 theme_override_font_sizes/font_size = 61
-text = "Accept Turn"
+text = "Continue"
+
+[node name="VictoryOverlay" type="Control" parent="UI"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VictoryRect" type="ColorRect" parent="UI/VictoryOverlay"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.9)
+
+[node name="VictoryLabel" type="Label" parent="UI/VictoryOverlay"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.4
+anchor_right = 0.8
+anchor_bottom = 0.6
+theme = ExtResource("4_c01mt")
+theme_override_font_sizes/font_size = 88
+text = "BLUE VICTORY"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Audio" type="Node" parent="."]
 
@@ -398,28 +510,100 @@ text = "Accept Turn"
 [node name="MusicPlayer" type="AudioStreamPlayer" parent="Audio"]
 
 [node name="city" parent="." instance=ExtResource("4_rarhs")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.74781, -0.05985, -2.76556)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.51517, 0.0495057, -3.68435)
 
 [node name="city2" parent="." instance=ExtResource("5_vcsgt")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.71571, -0.0966078, 2.8936)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.58216, -0.000955455, 1.95368)
 
 [node name="tree" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -3.08719, 0, 2.07634)
+transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -3.03326, 4.76837e-07, 2.09793)
 
 [node name="tree2" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, -2.71305, 0, 1.53432)
+transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, -2.72351, -9.53674e-07, 1.83217)
 
 [node name="tree6" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, 0.083384, 0, 4.12181)
+transform = Transform3D(0.38, 0, 0, 0, 0.38, 0, 0, 0, 0.38, -2.68326, 4.76837e-07, -0.855071)
 
 [node name="tree7" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.29, 0, 0, 0, 0.29, 0, 0, 0, 0.29, -0.624589, 0, 4.30097)
-
-[node name="tree3" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.39, 0, 0, 0, 0.39, 0, 0, 0, 0.39, -0.914936, 0, -0.983918)
+transform = Transform3D(0.29, 0, 0, 0, 0.29, 0, 0, 0, 0.29, -2.79427, 4.76837e-07, -0.338314)
 
 [node name="tree4" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -2.83201, 0, -4.16985)
+transform = Transform3D(0.31, 0, 0, 0, 0.31, 0, 0, 0, 0.31, -2.85082, 0, -3.68228)
 
 [node name="tree5" parent="." instance=ExtResource("7_nxtc6")]
-transform = Transform3D(0.39, 0, 0, 0, 0.39, 0, 0, 0, 0.39, -2.30136, 0, -4.95157)
+transform = Transform3D(0.39, 0, 0, 0, 0.39, 0, 0, 0, 0.39, -2.87003, -4.76837e-07, -4.0581)
+
+[node name="Open Terrain" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, -4.87205, 0.22789, -4.07887)
+
+[node name="Label3D" type="Label3D" parent="Open Terrain"]
+text = "  Plains
+┌ Half Casualties ┐
+"
+font_size = 48
+
+[node name="Red" type="Node3D" parent="."]
+transform = Transform3D(-4.37114e-08, -1, -4.37114e-08, 0, -4.37114e-08, 1, -1, 4.37114e-08, 1.91069e-15, -6.89017, -0.437269, -2.52333)
+
+[node name="Label3D" type="Label3D" parent="Red"]
+transform = Transform3D(1, 7.10543e-15, 0, -7.10543e-15, 1, -7.10543e-15, 2.11758e-22, 7.10543e-15, 1, 0.289885, -0.663208, 0.447827)
+text = "┌ Red Country ┐
+"
+font_size = 48
+vertical_alignment = 2
+
+[node name="Blue" type="Node3D" parent="."]
+transform = Transform3D(-4.37114e-08, -1, -4.37114e-08, 0, -4.37114e-08, 1, -1, 4.37114e-08, 1.91069e-15, -6.89017, -0.437269, 3.08751)
+
+[node name="Label3D" type="Label3D" parent="Blue"]
+transform = Transform3D(1, 7.10543e-15, 0, -7.10543e-15, 1, -7.10543e-15, 2.11758e-22, 7.10543e-15, 1, 0.289885, -0.663208, 0.447827)
+text = "┌ Blue Country ┐
+"
+font_size = 48
+vertical_alignment = 2
+
+[node name="Neutral" type="Node3D" parent="."]
+transform = Transform3D(-4.37114e-08, -1, -4.37114e-08, 0, -4.37114e-08, 1, -1, 4.37114e-08, 1.91069e-15, -6.89017, -0.437269, 0.3)
+
+[node name="Label3D" type="Label3D" parent="Neutral"]
+transform = Transform3D(1, 7.10543e-15, 0, -7.10543e-15, 1, -7.10543e-15, 2.11758e-22, 7.10543e-15, 1, 0.289885, -0.663208, 0.447827)
+text = "┌ Neutral Lands ┐
+"
+font_size = 48
+vertical_alignment = 2
+
+[node name="Difficult Terrain" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, -1.61459, 0.22789, -4.07887)
+
+[node name="Label3D" type="Label3D" parent="Difficult Terrain"]
+text = "Woods
+┌ Normal Casualties ┐
+"
+font_size = 48
+
+[node name="No Escape Terrain" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 1.64847, 0.22789, -4.07887)
+
+[node name="Label3D" type="Label3D" parent="No Escape Terrain"]
+text = "Mountains
+┌ Loser Destroyed ┐
+"
+font_size = 48
+
+[node name="Red City Label" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 4.76468, 0.447103, -4.08395)
+
+[node name="Label3D" type="Label3D" parent="Red City Label"]
+text = "Win or Occupy 
+Enemy Capital for
+ ┌ 3 Turns to Win ┐
+"
+font_size = 48
+
+[node name="Blue City Label" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 4.66672, 0.447102, 1.87233)
+
+[node name="Label3D" type="Label3D" parent="Blue City Label"]
+text = "┌ Defend Your Capital ┐
+"
+font_size = 48

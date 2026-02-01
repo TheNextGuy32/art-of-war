@@ -4,24 +4,26 @@ extends Node3D
 @export var card_size := Vector2(2.6, 1.6)
 @export var card_thickness := 0.08
 @export var card_color := Color(0.85, 0.9, 0.98)
-@export var ui_quad_size := Vector2(2.4, 0.9)
-@export var ui_viewport_size := Vector2i(1280, 420)
-@export var ui_hit_height := 0.6
 @export var situation_index := 0
 @export var terrain := "open"
 @export var owner_key := "neutral"
 
 @onready var _card_mesh: MeshInstance3D = $CardMesh
 @onready var _label: Label3D = $Label3D
-@onready var _ui_quad: MeshInstance3D = $UIQuad
-@onready var _ui_viewport: SubViewport = $UIViewport
-@onready var _ui_root: Control = $UIViewport/UIRoot
-@onready var _ui_area: Area3D = $UIArea
-@onready var _ui_collision: CollisionShape3D = $UIArea/CollisionShape3D
 @onready var _card_area: Area3D = $CardArea
 @onready var _card_collision: CollisionShape3D = $CardArea/CardCollision
 @onready var _own_units_anchor: Node3D = $OwnUnitsAnchor
 @onready var _enemy_units_anchor: Node3D = $EnemyUnitsAnchor
+@onready var _march_controls: Node3D = $MarchControls
+@onready var _march_label: Label3D = $MarchControls/MarchLabel
+@onready var _march_left: Area3D = $MarchControls/LeftArrow
+@onready var _march_right: Area3D = $MarchControls/RightArrow
+@onready var _march_left_label: Label3D = $MarchControls/LeftArrow/LeftLabel
+@onready var _march_right_label: Label3D = $MarchControls/RightArrow/RightLabel
+
+var _arrow_font_base := 32
+var _arrow_font_hover := 110
+var _arrows_visible := false
 
 func _ready() -> void:
 	if _card_mesh.mesh == null:
@@ -35,62 +37,33 @@ func _ready() -> void:
 		material.metallic = 0.0
 		_card_mesh.material_override = material
 	# Position is configured in the scene for editor-friendly layout.
-	_setup_ui_surface()
-	if Engine.is_editor_hint():
-		set_process(true)
-
-func _process(_delta: float) -> void:
-	if not Engine.is_editor_hint():
-		return
-	if _ui_viewport != null:
-		_ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-
-func _setup_ui_surface() -> void:
-	_ui_viewport.disable_3d = true
-	_ui_viewport.size = ui_viewport_size
-	_ui_viewport.gui_disable_input = false
-	_ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	var quad := QuadMesh.new()
-	quad.size = ui_quad_size
-	_ui_quad.mesh = quad
-	_ui_quad.position = Vector3(0, (card_thickness * 0.5) + 0.002, 0.0)
-	_ui_quad.rotation_degrees.x = -90.0
-	var ui_material := StandardMaterial3D.new()
-	ui_material.albedo_texture = _ui_viewport.get_texture()
-	ui_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ui_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ui_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	_ui_quad.material_override = ui_material
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(ui_quad_size.x, ui_hit_height, ui_quad_size.y)
-	_ui_collision.shape = shape
-	_ui_area.position = _ui_quad.position
-	_ui_area.rotation_degrees = _ui_quad.rotation_degrees
-	_ui_area.collision_layer = 1
-	_ui_area.collision_mask = 1
 	if _card_area != null:
 		_card_area.collision_layer = 2
 		_card_area.collision_mask = 2
 		_card_area.input_ray_pickable = true
-	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_ui_root.size = Vector2(ui_viewport_size.x, ui_viewport_size.y)
+	if _march_left != null:
+		_march_left.input_ray_pickable = true
+	if _march_right != null:
+		_march_right.input_ray_pickable = true
+	if _march_left_label != null:
+		_arrow_font_base = _march_left_label.font_size
+	if _march_right_label != null:
+		_arrow_font_base = min(_arrow_font_base, _march_right_label.font_size)
+	_set_arrows_visible(false)
+	_set_arrow_hover(false, false)
 
 func set_text(text: String) -> void:
-	_label.text = text
+	if _label != null:
+		_label.text = text
+
+func set_march_label(text: String) -> void:
+	if _march_label != null:
+		_march_label.text = text
 
 func set_card_color(color: Color) -> void:
 	card_color = color
 	if _card_mesh.material_override is StandardMaterial3D:
 		_card_mesh.material_override.albedo_color = card_color
-
-func get_ui_root() -> Control:
-	return _ui_root
-
-func get_ui_viewport() -> SubViewport:
-	return _ui_viewport
-
-func get_ui_area() -> Area3D:
-	return _ui_area
 
 func get_card_area() -> Area3D:
 	return _card_area
@@ -101,25 +74,31 @@ func get_own_units_anchor() -> Node3D:
 func get_enemy_units_anchor() -> Node3D:
 	return _enemy_units_anchor
 
-func ui_viewport_size_vec() -> Vector2:
-	return Vector2(ui_viewport_size.x, ui_viewport_size.y)
+func get_march_left_area() -> Area3D:
+	return _march_left
 
-func ui_quad_size_vec() -> Vector2:
-	return ui_quad_size
+func get_march_right_area() -> Area3D:
+	return _march_right
 
-func ui_quad_to_viewport(local_pos: Vector3) -> Vector2:
-	var u = (local_pos.x / ui_quad_size.x) + 0.5
-	var v = (local_pos.z / ui_quad_size.y) + 0.5
-	u = clamp(u, 0.0, 1.0)
-	v = clamp(v, 0.0, 1.0)
-	return Vector2(u * ui_viewport_size.x, v * ui_viewport_size.y)
+func set_march_controls_visible(visible: bool) -> void:
+	if _march_controls != null:
+		_march_controls.visible = visible
 
-func ui_quad_local_from_ray(ray_origin: Vector3, ray_dir: Vector3) -> Vector3:
-	var plane_origin = _ui_quad.global_position
-	var plane_normal = _ui_quad.global_transform.basis.y.normalized()
-	var denom = plane_normal.dot(ray_dir)
-	if abs(denom) < 0.0001:
-		return _ui_quad.to_local(ray_origin)
-	var t = plane_normal.dot(plane_origin - ray_origin) / denom
-	var intersect = ray_origin + (ray_dir * t)
-	return _ui_quad.to_local(intersect)
+func set_arrows_visible(visible: bool) -> void:
+	_set_arrows_visible(visible)
+
+func set_arrow_hover(left: bool, right: bool) -> void:
+	_set_arrow_hover(left, right)
+
+func _set_arrow_hover(left: bool, right: bool) -> void:
+	if _march_left_label != null:
+		_march_left_label.font_size = _arrow_font_hover if left else _arrow_font_base
+	if _march_right_label != null:
+		_march_right_label.font_size = _arrow_font_hover if right else _arrow_font_base
+
+func _set_arrows_visible(visible: bool) -> void:
+	_arrows_visible = visible
+	if _march_left != null:
+		_march_left.visible = visible
+	if _march_right != null:
+		_march_right.visible = visible

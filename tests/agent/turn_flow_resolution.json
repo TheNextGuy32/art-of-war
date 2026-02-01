@@ -2,12 +2,12 @@
   {"type":"command","name":"ping"},
   {"type":"command","name":"game_reset"},
   {"type":"assert","op":"equals","key":"current_player","expected":0},
-  {"type":"command","name":"game_set_plan","terrain":1,"divisions":6,"march_type":2},
+  {"type":"command","name":"game_set_plan","terrain":1,"divisions":3,"march_type":2},
   {"type":"command","name":"game_end_turn"},
   {"type":"assert","op":"equals","key":"awaiting_accept","expected":true},
   {"type":"command","name":"game_accept_turn"},
   {"type":"assert","op":"equals","key":"current_player","expected":1},
-  {"type":"command","name":"game_set_plan","terrain":1,"divisions":4,"march_type":1},
+  {"type":"command","name":"game_set_plan","terrain":1,"divisions":2,"march_type":1},
   {"type":"command","name":"game_end_turn"},
   {"type":"assert","op":"equals","key":"pending_resolution","expected":true},
   {"type":"command","name":"game_accept_turn"},
@@ -17,5 +17,5 @@
   {"type":"assert","op":"equals","key":"last_losses_p1","expected":22500},
   {"type":"assert","op":"equals","key":"last_losses_p2","expected":25000},
   {"type":"assert","op":"equals","key":"troops_p1","expected":77500},
-  {"type":"assert","op":"equals","key":"troops_p2","expected":76000}
+  {"type":"assert","op":"equals","key":"troops_p2","expected":80000}
 ]
